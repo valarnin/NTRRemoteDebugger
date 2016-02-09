@@ -101,14 +101,24 @@ namespace NTRDebuggerTool.Forms
         {
             NTRConnection.SendHeartbeatPacket();
 
-            if (NTRConnection.ProgressMax > 0)
+            if (NTRConnection.ProgressReadMax > 0)
             {
-                ProgressBar.Maximum = (int)NTRConnection.ProgressMax;
-                ProgressBar.Value = (int)NTRConnection.Progress;
+                ProgressBarMemoryRead.Maximum = (int)NTRConnection.ProgressReadMax;
+                ProgressBarMemoryRead.Value = (int)NTRConnection.ProgressRead;
             }
             else
             {
-                ProgressBar.Maximum = ProgressBar.Value = 0;
+                ProgressBarMemoryRead.Maximum = ProgressBarMemoryRead.Value = 0;
+            }
+
+            if (NTRConnection.ProgressScanMax > 0)
+            {
+                ProgressBarMemoryScan.Maximum = (int)NTRConnection.ProgressScanMax;
+                ProgressBarMemoryScan.Value = (int)NTRConnection.ProgressScan;
+            }
+            else
+            {
+                ProgressBarMemoryScan.Maximum = ProgressBarMemoryScan.Value = 0;
             }
 
             if (NTRConnection.IsProcessListUpdated)

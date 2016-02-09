@@ -103,9 +103,9 @@ namespace NTRDebuggerTool.Remote
             }
             while (Position < Buffer.Length)
             {
-                if (this.NTRConnection.ProgressMax > 0)
+                if (this.NTRConnection.ProgressReadMax > 0)
                 {
-                    this.NTRConnection.Progress = (uint)Position;
+                    this.NTRConnection.ProgressRead = (uint)Position;
                 }
                 Read = this.NTRConnection.Client.GetStream().Read(Buffer, Position, Buffer.Length - Position);
                 if (Read == 0)
@@ -205,7 +205,7 @@ namespace NTRDebuggerTool.Remote
 
         private void ReadMemoryPacket(uint DataLength)
         {
-            this.NTRConnection.ProgressMax = DataLength * 2;
+            this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = DataLength;
             if (DataLength < this.NTRConnection.SearchBytes.Length)
             {
                 this.NTRConnection.MemoryReadAddress = uint.MaxValue;
@@ -222,7 +222,7 @@ namespace NTRDebuggerTool.Remote
 
             for (uint i = 0; i <= DataLength - this.NTRConnection.SearchBytes.Length; ++i)
             {
-                this.NTRConnection.Progress = DataLength + i;
+                this.NTRConnection.ProgressScan = i;
                 RealAddress = (uint)(this.NTRConnection.MemoryReadAddress + i);
                 if (this.NTRConnection.NewSearch || this.NTRConnection.AddressesFound.Contains(RealAddress))
                 {
@@ -239,7 +239,7 @@ namespace NTRDebuggerTool.Remote
             }
 
             this.NTRConnection.MemoryReadAddress = uint.MaxValue;
-            this.NTRConnection.ProgressMax = this.NTRConnection.Progress = 0;
+            this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = this.NTRConnection.ProgressRead = this.NTRConnection.ProgressScan = 0;
         }
 
         #endregion

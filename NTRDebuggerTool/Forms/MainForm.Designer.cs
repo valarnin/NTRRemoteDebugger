@@ -36,17 +36,11 @@
             this.SearchValue = new System.Windows.Forms.TextBox();
             this.LabelSearchResults = new System.Windows.Forms.Label();
             this.ResultsGrid = new System.Windows.Forms.DataGridView();
-            this.SearchResultsAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SearchResultsValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ButtonAddResults = new System.Windows.Forms.Button();
             this.SearchButton = new System.Windows.Forms.Button();
             this.ResetButton = new System.Windows.Forms.Button();
             this.LabelResults = new System.Windows.Forms.Label();
             this.ValuesGrid = new System.Windows.Forms.DataGridView();
-            this.ValuesGridLockColumn = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.ValuesGridAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ValuesGridValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ValuesGridTypeColumn = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.ValuesGridContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.ValuesGridAddItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridDeleteItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -62,12 +56,19 @@
             this.Processes = new System.Windows.Forms.ComboBox();
             this.MemoryRange = new System.Windows.Forms.ComboBox();
             this.ProgressBarStatusStrip = new System.Windows.Forms.StatusStrip();
-            this.ProgressBar = new System.Windows.Forms.ProgressBar();
+            this.ProgressBarMemoryRead = new System.Windows.Forms.ProgressBar();
             this.GUIUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.LabelCustomRange = new System.Windows.Forms.Label();
             this.MemoryStart = new System.Windows.Forms.TextBox();
             this.MemorySize = new System.Windows.Forms.TextBox();
             this.LabelCurrentOperation = new System.Windows.Forms.Label();
+            this.SearchResultsAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SearchResultsValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ProgressBarMemoryScan = new System.Windows.Forms.ProgressBar();
+            this.ValuesGridLockColumn = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.ValuesGridAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ValuesGridValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ValuesGridTypeColumn = new System.Windows.Forms.DataGridViewComboBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -157,21 +158,6 @@
             this.ResultsGrid.Size = new System.Drawing.Size(218, 270);
             this.ResultsGrid.TabIndex = 7;
             // 
-            // SearchResultsAddressColumn
-            // 
-            this.SearchResultsAddressColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.SearchResultsAddressColumn.FillWeight = 600F;
-            this.SearchResultsAddressColumn.HeaderText = "Address";
-            this.SearchResultsAddressColumn.Name = "SearchResultsAddressColumn";
-            this.SearchResultsAddressColumn.ReadOnly = true;
-            // 
-            // SearchResultsValueColumn
-            // 
-            this.SearchResultsValueColumn.HeaderText = "Value";
-            this.SearchResultsValueColumn.Name = "SearchResultsValueColumn";
-            this.SearchResultsValueColumn.ReadOnly = true;
-            this.SearchResultsValueColumn.Width = 50;
-            // 
             // ButtonAddResults
             // 
             this.ButtonAddResults.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -244,41 +230,6 @@
             this.ValuesGrid.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellDoubleClick);
             this.ValuesGrid.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellLeave);
             this.ValuesGrid.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellValueChanged);
-            // 
-            // ValuesGridLockColumn
-            // 
-            this.ValuesGridLockColumn.HeaderText = "Lock";
-            this.ValuesGridLockColumn.Name = "ValuesGridLockColumn";
-            this.ValuesGridLockColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.ValuesGridLockColumn.TrueValue = "T";
-            this.ValuesGridLockColumn.Width = 35;
-            // 
-            // ValuesGridAddressColumn
-            // 
-            this.ValuesGridAddressColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ValuesGridAddressColumn.FillWeight = 600F;
-            this.ValuesGridAddressColumn.HeaderText = "Address";
-            this.ValuesGridAddressColumn.Name = "ValuesGridAddressColumn";
-            // 
-            // ValuesGridValueColumn
-            // 
-            this.ValuesGridValueColumn.HeaderText = "Value";
-            this.ValuesGridValueColumn.Name = "ValuesGridValueColumn";
-            this.ValuesGridValueColumn.Width = 50;
-            // 
-            // ValuesGridTypeColumn
-            // 
-            this.ValuesGridTypeColumn.HeaderText = "Type";
-            this.ValuesGridTypeColumn.Items.AddRange(new object[] {
-            "1 Byte",
-            "2 Bytes",
-            "4 Bytes",
-            "8 Bytes",
-            "Float",
-            "Double",
-            "Raw Bytes"});
-            this.ValuesGridTypeColumn.Name = "ValuesGridTypeColumn";
-            this.ValuesGridTypeColumn.Width = 40;
             // 
             // ValuesGridContextMenuStrip
             // 
@@ -418,14 +369,14 @@
             this.ProgressBarStatusStrip.SizingGrip = false;
             this.ProgressBarStatusStrip.TabIndex = 24;
             // 
-            // ProgressBar
+            // ProgressBarMemoryRead
             // 
-            this.ProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.ProgressBarMemoryRead.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ProgressBar.Location = new System.Drawing.Point(12, 315);
-            this.ProgressBar.Name = "ProgressBar";
-            this.ProgressBar.Size = new System.Drawing.Size(305, 15);
-            this.ProgressBar.TabIndex = 25;
+            this.ProgressBarMemoryRead.Location = new System.Drawing.Point(12, 315);
+            this.ProgressBarMemoryRead.Name = "ProgressBarMemoryRead";
+            this.ProgressBarMemoryRead.Size = new System.Drawing.Size(150, 15);
+            this.ProgressBarMemoryRead.TabIndex = 25;
             // 
             // GUIUpdateTimer
             // 
@@ -461,21 +412,83 @@
             // LabelCurrentOperation
             // 
             this.LabelCurrentOperation.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.LabelCurrentOperation.Location = new System.Drawing.Point(323, 315);
+            this.LabelCurrentOperation.Location = new System.Drawing.Point(324, 315);
             this.LabelCurrentOperation.Name = "LabelCurrentOperation";
-            this.LabelCurrentOperation.Size = new System.Drawing.Size(163, 15);
+            this.LabelCurrentOperation.Size = new System.Drawing.Size(162, 15);
             this.LabelCurrentOperation.TabIndex = 29;
+            // 
+            // SearchResultsAddressColumn
+            // 
+            this.SearchResultsAddressColumn.HeaderText = "Address";
+            this.SearchResultsAddressColumn.Name = "SearchResultsAddressColumn";
+            this.SearchResultsAddressColumn.ReadOnly = true;
+            this.SearchResultsAddressColumn.Width = 62;
+            // 
+            // SearchResultsValueColumn
+            // 
+            this.SearchResultsValueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.SearchResultsValueColumn.HeaderText = "Value";
+            this.SearchResultsValueColumn.Name = "SearchResultsValueColumn";
+            this.SearchResultsValueColumn.ReadOnly = true;
+            // 
+            // ProgressBarMemoryScan
+            // 
+            this.ProgressBarMemoryScan.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ProgressBarMemoryScan.Location = new System.Drawing.Point(168, 315);
+            this.ProgressBarMemoryScan.Name = "ProgressBarMemoryScan";
+            this.ProgressBarMemoryScan.Size = new System.Drawing.Size(150, 15);
+            this.ProgressBarMemoryScan.TabIndex = 30;
+            // 
+            // ValuesGridLockColumn
+            // 
+            this.ValuesGridLockColumn.HeaderText = "Lock";
+            this.ValuesGridLockColumn.Name = "ValuesGridLockColumn";
+            this.ValuesGridLockColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.ValuesGridLockColumn.TrueValue = "T";
+            this.ValuesGridLockColumn.Width = 35;
+            // 
+            // ValuesGridAddressColumn
+            // 
+            this.ValuesGridAddressColumn.HeaderText = "Address";
+            this.ValuesGridAddressColumn.Name = "ValuesGridAddressColumn";
+            this.ValuesGridAddressColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.ValuesGridAddressColumn.Width = 62;
+            // 
+            // ValuesGridValueColumn
+            // 
+            this.ValuesGridValueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ValuesGridValueColumn.HeaderText = "Value";
+            this.ValuesGridValueColumn.Name = "ValuesGridValueColumn";
+            this.ValuesGridValueColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.ValuesGridValueColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // ValuesGridTypeColumn
+            // 
+            this.ValuesGridTypeColumn.HeaderText = "Type";
+            this.ValuesGridTypeColumn.Items.AddRange(new object[] {
+            "1 Byte",
+            "2 Bytes",
+            "4 Bytes",
+            "8 Bytes",
+            "Float",
+            "Double",
+            "Raw Bytes"});
+            this.ValuesGridTypeColumn.Name = "ValuesGridTypeColumn";
+            this.ValuesGridTypeColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.ValuesGridTypeColumn.Width = 63;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(498, 334);
+            this.Controls.Add(this.ProgressBarMemoryScan);
             this.Controls.Add(this.LabelCurrentOperation);
             this.Controls.Add(this.MemorySize);
             this.Controls.Add(this.MemoryStart);
             this.Controls.Add(this.LabelCustomRange);
-            this.Controls.Add(this.ProgressBar);
+            this.Controls.Add(this.ProgressBarMemoryRead);
             this.Controls.Add(this.ProgressBarStatusStrip);
             this.Controls.Add(this.MemoryRange);
             this.Controls.Add(this.Processes);
@@ -525,8 +538,6 @@
         private System.Windows.Forms.Button ResetButton;
         private System.Windows.Forms.Label LabelResults;
         private System.Windows.Forms.DataGridView ValuesGrid;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SearchResultsAddressColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn SearchResultsValueColumn;
         private System.Windows.Forms.Label LabelIPPort;
         private System.Windows.Forms.Label LabelProcess;
         private System.Windows.Forms.Label LabelMemoryRange;
@@ -538,12 +549,8 @@
         private System.Windows.Forms.ComboBox Processes;
         private System.Windows.Forms.ComboBox MemoryRange;
         private System.Windows.Forms.StatusStrip ProgressBarStatusStrip;
-        private System.Windows.Forms.ProgressBar ProgressBar;
+        private System.Windows.Forms.ProgressBar ProgressBarMemoryRead;
         private System.Windows.Forms.Timer GUIUpdateTimer;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
-        private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
         private System.Windows.Forms.Label LabelCustomRange;
         internal System.Windows.Forms.TextBox MemoryStart;
         internal System.Windows.Forms.TextBox MemorySize;
@@ -552,5 +559,12 @@
         private System.Windows.Forms.ToolStripMenuItem ValuesGridAddItem;
         private System.Windows.Forms.ToolStripMenuItem ValuesGridDeleteItem;
         private System.Windows.Forms.ToolStripMenuItem ValuesGridConvertCode;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SearchResultsAddressColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SearchResultsValueColumn;
+        private System.Windows.Forms.ProgressBar ProgressBarMemoryScan;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
     }
 }

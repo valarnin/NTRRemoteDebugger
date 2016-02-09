@@ -17,8 +17,11 @@ namespace NTRDebuggerTool.Remote
 
         public ReadOnlyDictionary<uint, uint> AddressSpaces;
 
-        public uint Progress = 0;
-        public uint ProgressMax = 0;
+        public uint ProgressRead = 0;
+        public uint ProgressReadMax = 0;
+
+        public uint ProgressScan = 0;
+        public uint ProgressScanMax = 0;
 
         internal uint MemoryReadAddress = 0;
         internal byte[] SearchBytes;
