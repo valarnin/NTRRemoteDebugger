@@ -222,6 +222,7 @@ namespace NTRDebuggerTool.Forms
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
+            NTRConnection.AddressesFound.Clear();
             ResultsGrid.Rows.Clear();
             ControlEnabledSearchType = ControlEnabledMemoryRange = true;
             if (MemoryRange.SelectedIndex > 0)
