@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Xml;
 
 namespace NTRDebuggerTool.Remote
 {
@@ -162,12 +163,33 @@ namespace NTRDebuggerTool.Remote
                 string ProcessID = KVStrings[0].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim().Substring(2);
                 string ProcessName = KVStrings[1].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim();
                 string TitleID = KVStrings[2].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim();
+                XmlNode Node = null;
 
-                this.NTRConnection.Processes.Add(ProcessID + "|" + ProcessName + "," + TitleID);
+                if (NTRConnection.ReleasesDocument != null)
+                {
+                    Node = NTRConnection.ReleasesDocument.DocumentElement.SelectSingleNode("/releases/release[translate(./titleid, 'ABCDEF', 'abcdef') = '" + TitleID.ToLower() + "']/name");
+                }
+
+                if (Node != null)
+                {
+                    this.NTRConnection.Processes.Add(ProcessID + "|" + Node.InnerText);
+                }
+                else
+                {
+                    this.NTRConnection.Processes.Add(ProcessID + "|" + ProcessName + "," + TitleID);
+                }
             }
 
             if (this.NTRConnection.Processes.Count > 0)
             {
+                //Bubble processes we ID'd to the top
+                List<string> TempProcesses = this.NTRConnection.Processes.FindAll(x => x.Contains(','));
+                this.NTRConnection.Processes.RemoveAll(x => TempProcesses.Contains(x));
+                foreach (string Process in TempProcesses)
+                {
+                    this.NTRConnection.Processes.Add(Process);
+                }
+
                 this.NTRConnection.IsProcessListUpdated = true;
             }
         }

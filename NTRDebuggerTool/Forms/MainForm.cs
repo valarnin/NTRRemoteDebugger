@@ -132,6 +132,10 @@ namespace NTRDebuggerTool.Forms
                     Processes.SelectedValue = CurrentProcess;
                     Processes.SelectedIndex = Processes.Items.IndexOf(CurrentProcess);
                 }
+                else if (!Processes.Items[0].ToString().Contains(','))
+                {
+                    Processes.SelectedIndex = 0;
+                }
                 SetConnectedControls(true);
                 ControlEnabledButtonConnectDisconnect = true;
                 NTRConnection.SetCurrentOperationText = "";

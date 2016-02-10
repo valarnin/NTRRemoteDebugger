@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
+using System.Xml;
 
 namespace NTRDebuggerTool.Remote
 {
@@ -53,6 +55,8 @@ namespace NTRDebuggerTool.Remote
         public string SetCurrentOperationText = "";
         private NTRPacketReceiverThread PacketReceiverThread;
 
+        internal XmlDocument ReleasesDocument;
+
         #endregion
 
         #region Constructor
@@ -60,6 +64,15 @@ namespace NTRDebuggerTool.Remote
         public NTRRemoteConnection()
         {
             this.PacketReceiverThread = new NTRPacketReceiverThread(this);
+            try
+            {
+                this.ReleasesDocument = new XmlDocument();
+                ReleasesDocument.Load(File.OpenRead(Path.GetTempPath() + "3dsreleases.xml"));
+            }
+            catch (Exception e)
+            {
+                this.ReleasesDocument = null;
+            }
         }
 
         #endregion
@@ -241,7 +254,7 @@ namespace NTRDebuggerTool.Remote
 
         private void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size)
         {
-            SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address));
+            SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
             this.MemoryReadAddress = Address;
             this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, Size });
             while (MemoryReadAddress != uint.MaxValue)
@@ -280,7 +293,7 @@ namespace NTRDebuggerTool.Remote
         {
             if (IsConnecting || this.Client != null)
             {
-                if (IsConnecting || this.Client.Connected)
+                if (IsConnecting || (this.Client != null && this.Client.Connected))
                 {
                     if (CanSendHeartbeat && LastHeartbeat < (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - 30000)
                     {
