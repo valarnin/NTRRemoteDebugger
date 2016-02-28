@@ -15,7 +15,7 @@ namespace NTRDebuggerTool.Remote
 
         public String IP { get; set; }
         public Int16 Port { get; set; }
-        public List<uint> AddressesFound = new List<uint>();
+        public Dictionary<uint, byte[]> AddressesFound = new Dictionary<uint, byte[]>();
 
         public ReadOnlyDictionary<uint, uint> AddressSpaces;
 
@@ -71,6 +71,7 @@ namespace NTRDebuggerTool.Remote
             }
             catch (Exception e)
             {
+                System.Console.WriteLine(e);
                 this.ReleasesDocument = null;
             }
         }
@@ -232,7 +233,7 @@ namespace NTRDebuggerTool.Remote
             if (AddressesFound.Count > 0)
             {
                 //Clone the list to an array to prevent concurrent modification
-                foreach (uint Address in AddressesFound.ToArray())
+                foreach (uint Address in AddressesFound.Keys)
                 {
                     SendReadMemoryPacket(ProcessID, Address, Size);
                 }

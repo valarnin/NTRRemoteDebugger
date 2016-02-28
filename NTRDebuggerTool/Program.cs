@@ -30,7 +30,8 @@ namespace NTRDebuggerTool
                 }
                 catch (Exception e)
                 {
-                    System.Console.Write(e);
+                    System.Console.WriteLine(ex);
+                    System.Console.WriteLine(e);
                 }
             }
 

@@ -48,7 +48,7 @@ namespace NTRDebuggerTool.Forms
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            this.SearchType.SelectedIndex = 2;
+            this.ComboDataType.SelectedIndex = 2;
         }
 
         private void UpdateLockedControls()
@@ -64,7 +64,7 @@ namespace NTRDebuggerTool.Forms
             this.ResetButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledResetButton;
             this.ResultsGrid.Enabled = !NTRConnection.LockControls && this.ControlEnabledResultsGrid;
             this.SearchButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchButton;
-            this.SearchType.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchType;
+            this.ComboDataType.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchType;
             this.SearchValue.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchValue;
             this.ValuesGrid.Enabled = !NTRConnection.LockControls && this.ControlEnabledValuesGrid;
             this.MemoryStart.Enabled = !NTRConnection.LockControls && this.ControlEnabledStart;
@@ -165,16 +165,16 @@ namespace NTRDebuggerTool.Forms
             if (NTRConnection.IsMemorySearchFinished)
             {
                 NTRConnection.IsMemorySearchFinished = false;
-                LabelResults.Text = "Results: " + NTRConnection.AddressesFound.Count;
+                LabelLastSearch.Text = "Last Search\n" + NTRConnection.AddressesFound.Count + " results found for " + GetDisplayForByteArray(NTRConnection.SearchBytes);
 
                 if (NTRConnection.AddressesFound.Count < 50)
                 {
                     ResultsGrid.Rows.Clear();
-                    foreach (uint Address in NTRConnection.AddressesFound)
+                    foreach (uint Address in NTRConnection.AddressesFound.Keys)
                     {
                         int Row = ResultsGrid.Rows.Add();
                         ResultsGrid[0, Row].Value = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
-                        ResultsGrid[1, Row].Value = SearchValue.Text;
+                        ResultsGrid[1, Row].Value = GetDisplayForByteArray(NTRConnection.AddressesFound[Address]);
                     }
                 }
                 NTRConnection.SetCurrentOperationText = "";
@@ -199,6 +199,28 @@ namespace NTRDebuggerTool.Forms
                         SetMemory(i);
                     }
                 }
+            }
+        }
+
+        private string GetDisplayForByteArray(byte[] p)
+        {
+            switch (ThreadEventDispatcher.CurrentSelectedDataType)
+            {
+                case 0: //1 Byte
+                    return ((uint)p[0]).ToString();
+                case 1: //2 Bytes
+                    return BitConverter.ToUInt16(p, 0).ToString();
+                case 2: //4 Bytes
+                    return BitConverter.ToUInt32(p, 0).ToString();
+                case 3: //8 Bytes
+                    return BitConverter.ToUInt64(p, 0).ToString();
+                case 4: //Float
+                    return BitConverter.ToSingle(p, 0).ToString();
+                case 5: //Double
+                    return BitConverter.ToDouble(p, 0).ToString();
+                case 6: //Raw Bytes
+                default:
+                    return Utilities.GetStringFromByteArray(p);
             }
         }
 
@@ -234,7 +256,7 @@ namespace NTRDebuggerTool.Forms
                 ControlEnabledStart = ControlEnabledSize = true;
             }
 
-            LabelResults.Text = "Results: ";
+            LabelLastSearch.Text = "Last Search\n";
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -253,7 +275,7 @@ namespace NTRDebuggerTool.Forms
                     ValuesGrid[0, RowIndex].Value = null;
                     ValuesGrid[1, RowIndex].Value = Row.Cells[0].Value;
                     ValuesGrid[2, RowIndex].Value = SearchValue.Text;
-                    ValuesGrid[3, RowIndex].Value = SearchType.Text;
+                    ValuesGrid[3, RowIndex].Value = ComboDataType.Text;
                 }
             }
         }
@@ -383,7 +405,7 @@ namespace NTRDebuggerTool.Forms
         private void SearchButton_Click(object sender, EventArgs e)
         {
             SearchButton.Enabled = ControlEnabledSearchButton = false;
-            ThreadEventDispatcher.CurrentSelectedDataType = SearchType.SelectedIndex;
+            ThreadEventDispatcher.CurrentSelectedDataType = ComboDataType.SelectedIndex;
             ThreadEventDispatcher.CurrentMemoryRange = this.MemoryRange.Text;
             ThreadEventDispatcher.DispatchSearch = true;
         }

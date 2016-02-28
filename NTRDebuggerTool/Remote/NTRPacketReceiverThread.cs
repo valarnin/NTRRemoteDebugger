@@ -246,16 +246,16 @@ namespace NTRDebuggerTool.Remote
             {
                 this.NTRConnection.ProgressScan = i;
                 RealAddress = (uint)(this.NTRConnection.MemoryReadAddress + i);
-                if (this.NTRConnection.NewSearch || this.NTRConnection.AddressesFound.Contains(RealAddress))
+                if (this.NTRConnection.NewSearch || this.NTRConnection.AddressesFound.ContainsKey(RealAddress))
                 {
                     Array.Copy(Buffer, i, TemporaryBuffer, 0, TemporaryBuffer.Length);
                     if (!System.Linq.Enumerable.SequenceEqual(this.NTRConnection.SearchBytes, TemporaryBuffer))
                     {
                         this.NTRConnection.AddressesFound.Remove(RealAddress);
                     }
-                    else if (!this.NTRConnection.AddressesFound.Contains(RealAddress))
+                    else if (!this.NTRConnection.AddressesFound.ContainsKey(RealAddress))
                     {
-                        this.NTRConnection.AddressesFound.Add(RealAddress);
+                        this.NTRConnection.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
                     }
                 }
             }
