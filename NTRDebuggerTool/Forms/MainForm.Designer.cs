@@ -33,6 +33,8 @@
             this.ComboDataType = new System.Windows.Forms.ComboBox();
             this.SearchValue = new System.Windows.Forms.TextBox();
             this.ResultsGrid = new System.Windows.Forms.DataGridView();
+            this.SearchResultsAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SearchResultsValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ButtonAddResults = new System.Windows.Forms.Button();
             this.SearchButton = new System.Windows.Forms.Button();
             this.ResetButton = new System.Windows.Forms.Button();
@@ -63,8 +65,6 @@
             this.MemorySize = new System.Windows.Forms.TextBox();
             this.LabelCurrentOperation = new System.Windows.Forms.Label();
             this.ProgressBarMemoryScan = new System.Windows.Forms.ProgressBar();
-            this.SearchResultsAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.SearchResultsValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.LabelLastSearch = new System.Windows.Forms.Label();
             this.LabelDataType = new System.Windows.Forms.Label();
             this.LabelSearchValue = new System.Windows.Forms.Label();
@@ -82,18 +82,11 @@
             this.ComboDataType.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ComboDataType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.ComboDataType.FormattingEnabled = true;
-            this.ComboDataType.Items.AddRange(new object[] {
-            "1 Byte",
-            "2 Bytes",
-            "4 Bytes",
-            "8 Bytes",
-            "Float",
-            "Double",
-            "Raw Bytes"});
             this.ComboDataType.Location = new System.Drawing.Point(602, 109);
             this.ComboDataType.Name = "ComboDataType";
             this.ComboDataType.Size = new System.Drawing.Size(91, 21);
             this.ComboDataType.TabIndex = 1;
+            this.ComboDataType.SelectionChangeCommitted += new System.EventHandler(this.ComboDataType_SelectedValueChanged);
             // 
             // SearchValue
             // 
@@ -127,6 +120,20 @@
             this.ResultsGrid.ShowRowErrors = false;
             this.ResultsGrid.Size = new System.Drawing.Size(377, 476);
             this.ResultsGrid.TabIndex = 7;
+            // 
+            // SearchResultsAddressColumn
+            // 
+            this.SearchResultsAddressColumn.HeaderText = "Address";
+            this.SearchResultsAddressColumn.Name = "SearchResultsAddressColumn";
+            this.SearchResultsAddressColumn.ReadOnly = true;
+            this.SearchResultsAddressColumn.Width = 62;
+            // 
+            // SearchResultsValueColumn
+            // 
+            this.SearchResultsValueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.SearchResultsValueColumn.HeaderText = "Value on Search";
+            this.SearchResultsValueColumn.Name = "SearchResultsValueColumn";
+            this.SearchResultsValueColumn.ReadOnly = true;
             // 
             // ButtonAddResults
             // 
@@ -217,14 +224,6 @@
             // ValuesGridTypeColumn
             // 
             this.ValuesGridTypeColumn.HeaderText = "Type";
-            this.ValuesGridTypeColumn.Items.AddRange(new object[] {
-            "1 Byte",
-            "2 Bytes",
-            "4 Bytes",
-            "8 Bytes",
-            "Float",
-            "Double",
-            "Raw Bytes"});
             this.ValuesGridTypeColumn.Name = "ValuesGridTypeColumn";
             this.ValuesGridTypeColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.ValuesGridTypeColumn.Width = 63;
@@ -423,20 +422,6 @@
             this.ProgressBarMemoryScan.Size = new System.Drawing.Size(377, 15);
             this.ProgressBarMemoryScan.TabIndex = 30;
             // 
-            // SearchResultsAddressColumn
-            // 
-            this.SearchResultsAddressColumn.HeaderText = "Address";
-            this.SearchResultsAddressColumn.Name = "SearchResultsAddressColumn";
-            this.SearchResultsAddressColumn.ReadOnly = true;
-            this.SearchResultsAddressColumn.Width = 62;
-            // 
-            // SearchResultsValueColumn
-            // 
-            this.SearchResultsValueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.SearchResultsValueColumn.HeaderText = "Value on Search";
-            this.SearchResultsValueColumn.Name = "SearchResultsValueColumn";
-            this.SearchResultsValueColumn.ReadOnly = true;
-            // 
             // LabelLastSearch
             // 
             this.LabelLastSearch.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -482,18 +467,11 @@
             this.ComboSearchType.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.ComboSearchType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.ComboSearchType.FormattingEnabled = true;
-            this.ComboSearchType.Items.AddRange(new object[] {
-            "1 Byte",
-            "2 Bytes",
-            "4 Bytes",
-            "8 Bytes",
-            "Float",
-            "Double",
-            "Raw Bytes"});
             this.ComboSearchType.Location = new System.Drawing.Point(486, 109);
             this.ComboSearchType.Name = "ComboSearchType";
             this.ComboSearchType.Size = new System.Drawing.Size(110, 21);
             this.ComboSearchType.TabIndex = 35;
+            this.ComboSearchType.SelectionChangeCommitted += new System.EventHandler(this.ComboSearchType_SelectedValueChanged);
             // 
             // textBox1
             // 
@@ -598,10 +576,6 @@
         private System.Windows.Forms.ToolStripMenuItem ValuesGridDeleteItem;
         private System.Windows.Forms.ToolStripMenuItem ValuesGridConvertCode;
         private System.Windows.Forms.ProgressBar ProgressBarMemoryScan;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
-        private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn SearchResultsAddressColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn SearchResultsValueColumn;
         private System.Windows.Forms.Label LabelLastSearch;
@@ -611,5 +585,9 @@
         private System.Windows.Forms.ComboBox ComboSearchType;
         internal System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Label LabelEndAddress;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
     }
 }

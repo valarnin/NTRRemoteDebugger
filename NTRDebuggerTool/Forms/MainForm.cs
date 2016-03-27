@@ -1,4 +1,5 @@
-﻿using NTRDebuggerTool.Remote;
+﻿using NTRDebuggerTool.Forms.FormEnums;
+using NTRDebuggerTool.Remote;
 using System;
 using System.Linq;
 using System.Threading;
@@ -21,6 +22,7 @@ namespace NTRDebuggerTool.Forms
         private bool ControlEnabledResetButton = false;
         private bool ControlEnabledResultsGrid = false;
         internal bool ControlEnabledSearchButton = false;
+        private bool ControlEnabledDataType = false;
         private bool ControlEnabledSearchType = false;
         private bool ControlEnabledSearchValue = false;
         private bool ControlEnabledValuesGrid = false;
@@ -44,10 +46,19 @@ namespace NTRDebuggerTool.Forms
             this.EventDispatcherThread = new Thread(new ThreadStart(this.ThreadEventDispatcher.ThreadEventDispatcher));
             this.EventDispatcherThread.Name = "EventDispatcherThread";
             this.EventDispatcherThread.Start();
+
+            //Debug Code
+            /*SetConnectedControls(true);
+            SetConnectionControls(true);
+            SetProcessSelectedControls(true);*/
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());
+            ComboDataType.Items.AddRange(DataTypeExactTool.GetValues());
+            ValuesGridTypeColumn.Items.AddRange(ComboDataType.Items);
+            this.ComboSearchType.SelectedIndex = 0;
             this.ComboDataType.SelectedIndex = 2;
         }
 
@@ -64,7 +75,8 @@ namespace NTRDebuggerTool.Forms
             this.ResetButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledResetButton;
             this.ResultsGrid.Enabled = !NTRConnection.LockControls && this.ControlEnabledResultsGrid;
             this.SearchButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchButton;
-            this.ComboDataType.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchType;
+            this.ComboSearchType.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchType;
+            this.ComboDataType.Enabled = !NTRConnection.LockControls && this.ControlEnabledDataType;
             this.SearchValue.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchValue;
             this.ValuesGrid.Enabled = !NTRConnection.LockControls && this.ControlEnabledValuesGrid;
             this.MemoryStart.Enabled = !NTRConnection.LockControls && this.ControlEnabledStart;
@@ -86,6 +98,7 @@ namespace NTRDebuggerTool.Forms
             ControlEnabledResultsGrid = Enabled;
             ControlEnabledSearchButton = Enabled;
             ControlEnabledSearchType = Enabled;
+            ControlEnabledDataType = Enabled;
             ControlEnabledSearchValue = Enabled;
             ControlEnabledValuesGrid = Enabled;
         }
@@ -162,19 +175,18 @@ namespace NTRDebuggerTool.Forms
                 NTRConnection.SetCurrentOperationText = "";
             }
 
-            if (NTRConnection.IsMemorySearchFinished)
+            if (NTRConnection.SearchCriteria != null)
             {
-                NTRConnection.IsMemorySearchFinished = false;
-                LabelLastSearch.Text = "Last Search\n" + NTRConnection.AddressesFound.Count + " results found for " + GetDisplayForByteArray(NTRConnection.SearchBytes);
+                LabelLastSearch.Text = "Last Search\n" + NTRConnection.SearchCriteria.AddressesFound.Count + " results found for " + GetDisplayForByteArray(NTRConnection.SearchCriteria.SearchValue);
 
-                if (NTRConnection.AddressesFound.Count < 50)
+                if (NTRConnection.SearchCriteria.SearchComplete && NTRConnection.SearchCriteria.AddressesFound.Count < 50000)
                 {
                     ResultsGrid.Rows.Clear();
-                    foreach (uint Address in NTRConnection.AddressesFound.Keys)
+                    foreach (uint Address in NTRConnection.SearchCriteria.AddressesFound.Keys)
                     {
                         int Row = ResultsGrid.Rows.Add();
                         ResultsGrid[0, Row].Value = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
-                        ResultsGrid[1, Row].Value = GetDisplayForByteArray(NTRConnection.AddressesFound[Address]);
+                        ResultsGrid[1, Row].Value = GetDisplayForByteArray(NTRConnection.SearchCriteria.AddressesFound[Address]);
                     }
                 }
                 NTRConnection.SetCurrentOperationText = "";
@@ -202,25 +214,26 @@ namespace NTRDebuggerTool.Forms
             }
         }
 
-        private string GetDisplayForByteArray(byte[] p)
+        public string GetDisplayForByteArray(byte[] p)
         {
             switch (ThreadEventDispatcher.CurrentSelectedDataType)
             {
-                case 0: //1 Byte
+                case DataTypeExact.Bytes1: //1 Byte
                     return ((uint)p[0]).ToString();
-                case 1: //2 Bytes
+                case DataTypeExact.Bytes2: //2 Bytes
                     return BitConverter.ToUInt16(p, 0).ToString();
-                case 2: //4 Bytes
+                case DataTypeExact.Bytes4: //4 Bytes
                     return BitConverter.ToUInt32(p, 0).ToString();
-                case 3: //8 Bytes
+                case DataTypeExact.Bytes8: //8 Bytes
                     return BitConverter.ToUInt64(p, 0).ToString();
-                case 4: //Float
+                case DataTypeExact.Float: //Float
                     return BitConverter.ToSingle(p, 0).ToString();
-                case 5: //Double
+                case DataTypeExact.Double: //Double
                     return BitConverter.ToDouble(p, 0).ToString();
-                case 6: //Raw Bytes
-                default:
+                case DataTypeExact.Raw: //Raw Bytes
                     return Utilities.GetStringFromByteArray(p);
+                default: //Text
+                    return System.Text.Encoding.Default.GetString(p);
             }
         }
 
@@ -228,30 +241,31 @@ namespace NTRDebuggerTool.Forms
         {
             switch (ThreadEventDispatcher.CurrentSelectedDataType)
             {
-                case 0: //1 Byte
+                case DataTypeExact.Bytes1: //1 Byte
                     return 1;
-                case 1: //2 Bytes
+                case DataTypeExact.Bytes2: //2 Bytes
                     return 2;
-                case 3: //8 Bytes
-                    return 8;
-                case 4: //Float
-                    return (uint)BitConverter.GetBytes(float.MinValue).Length;
-                case 5: //Double
-                    return (uint)BitConverter.GetBytes(double.MinValue).Length;
-                case 6: //Raw Bytes
-                    return (uint)Utilities.GetByteArrayFromByteString(SearchValue.Text).Length;
-                case 2: //4 Bytes
-                default:
+                case DataTypeExact.Bytes4: //4 Bytes
                     return 4;
+                case DataTypeExact.Bytes8: //8 Bytes
+                    return 8;
+                case DataTypeExact.Float: //Float
+                    return (uint)BitConverter.GetBytes(float.MinValue).Length;
+                case DataTypeExact.Double: //Double
+                    return (uint)BitConverter.GetBytes(double.MinValue).Length;
+                case DataTypeExact.Raw: //Raw Bytes
+                    return (uint)Utilities.GetByteArrayFromByteString(SearchValue.Text).Length;
+                default: //Text
+                    return (uint)System.Text.Encoding.Default.GetBytes(SearchValue.Text).Length;
             }
         }
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
-            NTRConnection.AddressesFound.Clear();
+            NTRConnection.SearchCriteria = null;
             ResultsGrid.Rows.Clear();
-            ControlEnabledSearchType = ControlEnabledMemoryRange = true;
-            if (MemoryRange.SelectedIndex > 0)
+            ControlEnabledSearchType = ControlEnabledMemoryRange = ControlEnabledDataType = true;
+            if (MemoryRange.SelectedIndex == MemoryRange.Items.Count - 1)
             {
                 ControlEnabledStart = ControlEnabledSize = true;
             }
@@ -302,51 +316,59 @@ namespace NTRDebuggerTool.Forms
 
         private void SetMemory(int RowIndex)
         {
-            if (IsValidMemoryAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0)))
+            uint Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0);
+            if (IsValidMemoryAddress(Address))
             {
-                switch ((string)ValuesGrid[3, RowIndex].Value)
+                uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0);
+                switch (DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value))
                 {
-                    case "1 Byte": //1 Byte
+                    case DataTypeExact.Bytes1: //1 Byte
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
+                            ProcessID,
+                            Address,
                             (byte)uint.Parse((string)ValuesGrid[2, RowIndex].Value));
                         break;
-                    case "2 Bytes": //2 Bytes
+                    case DataTypeExact.Bytes2: //2 Bytes
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
+                            ProcessID,
+                            Address,
                             ushort.Parse((string)ValuesGrid[2, RowIndex].Value));
                         break;
-                    case "4 Bytes": //4 Bytes
+                    case DataTypeExact.Bytes4: //4 Bytes
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
+                            ProcessID,
+                            Address,
                             uint.Parse((string)ValuesGrid[2, RowIndex].Value));
                         break;
-                    case "8 Bytes": //8 Bytes
+                    case DataTypeExact.Bytes8: //8 Bytes
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
+                            ProcessID,
+                            Address,
                             ulong.Parse((string)ValuesGrid[2, RowIndex].Value));
                         break;
-                    case "Float": //Float
+                    case DataTypeExact.Float: //Float
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
+                            ProcessID,
+                            Address,
                             float.Parse((string)ValuesGrid[2, RowIndex].Value));
                         break;
-                    case "Double": //Double
+                    case DataTypeExact.Double: //Double
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
+                            ProcessID,
+                            Address,
                             double.Parse((string)ValuesGrid[2, RowIndex].Value));
                         break;
-                    case "Raw Bytes": //Raw Bytes
+                    case DataTypeExact.Raw: //Raw Bytes
                         NTRConnection.SendWriteMemoryPacket(
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0),
-                            BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0),
-                             Utilities.GetByteArrayFromByteString((string)ValuesGrid[2, RowIndex].Value));
+                            ProcessID,
+                            Address,
+                            Utilities.GetByteArrayFromByteString((string)ValuesGrid[2, RowIndex].Value));
+                        break;
+                    case DataTypeExact.Text: //Raw Bytes
+                        NTRConnection.SendWriteMemoryPacket(
+                            ProcessID,
+                            Address,
+                            System.Text.Encoding.Default.GetBytes((string)ValuesGrid[2, RowIndex].Value));
                         break;
                 }
             }
@@ -405,9 +427,89 @@ namespace NTRDebuggerTool.Forms
         private void SearchButton_Click(object sender, EventArgs e)
         {
             SearchButton.Enabled = ControlEnabledSearchButton = false;
-            ThreadEventDispatcher.CurrentSelectedDataType = ComboDataType.SelectedIndex;
+            ThreadEventDispatcher.CurrentSelectedDataType = DataTypeExactTool.GetValue(ComboDataType.SelectedItem.ToString());
+            ThreadEventDispatcher.CurrentSelectedSearchType = SearchTypeBaseTool.GetValue(ComboSearchType.SelectedItem.ToString());
             ThreadEventDispatcher.CurrentMemoryRange = this.MemoryRange.Text;
             ThreadEventDispatcher.DispatchSearch = true;
+        }
+
+        private void ComboSearchType_SelectedValueChanged(object sender, EventArgs e)
+        {
+            string CurrentDataType = ComboDataType.SelectedItem == null ? null : ComboDataType.SelectedItem.ToString();
+            switch (SearchTypeBaseTool.GetValue(ComboSearchType.SelectedItem.ToString()))
+            {
+                case SearchTypeBase.Exact:
+                    ComboDataType.Items.Clear();
+                    ComboDataType.Items.AddRange(DataTypeExactTool.GetValues());
+                    break;
+                case SearchTypeBase.Range:
+                case SearchTypeBase.IncreasedBy:
+                case SearchTypeBase.DecreasedBy:
+                case SearchTypeBase.Increased:
+                case SearchTypeBase.Decreased:
+                    ComboDataType.Items.Clear();
+                    ComboDataType.Items.AddRange(DataTypeNumericTool.GetValues());
+                    break;
+                case SearchTypeBase.Unknown:
+                    ComboDataType.Items.Clear();
+                    break;
+            }
+            if (CurrentDataType != null && ComboDataType.Items.Contains(CurrentDataType))
+            {
+                ComboDataType.SelectedIndex = ComboDataType.Items.IndexOf(CurrentDataType);
+                ComboDataType.SelectedItem = ComboDataType.SelectedValue = CurrentDataType;
+            }
+            else
+            {
+                ComboDataType.SelectedIndex = 0;
+                ComboDataType.SelectedItem = ComboDataType.SelectedValue = ComboDataType.Items[0];
+            }
+        }
+
+        private void ComboDataType_SelectedValueChanged(object sender, EventArgs e)
+        {
+            string CurrentSearchType = ComboSearchType.SelectedItem == null ? null : ComboSearchType.SelectedItem.ToString();
+            if (NTRConnection.SearchCriteria == null)
+            {
+                ComboSearchType.Items.Clear();
+                ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());
+            }
+            else
+            {
+                switch (DataTypeExactTool.GetValue(ComboDataType.SelectedItem.ToString()))
+                {
+                    case DataTypeExact.Bytes1:
+                    case DataTypeExact.Bytes2:
+                    case DataTypeExact.Bytes4:
+                    case DataTypeExact.Bytes8:
+                    case DataTypeExact.Float:
+                    case DataTypeExact.Double:
+                        ComboSearchType.Items.Clear();
+                        ComboSearchType.Items.AddRange(SearchTypeNumericTool.GetValues());
+                        break;
+                    case DataTypeExact.Raw:
+                    case DataTypeExact.Text:
+                        ComboSearchType.Items.Clear();
+                        ComboSearchType.Items.AddRange(SearchTypeTextTool.GetValues());
+                        break;
+                }
+            }
+            if (CurrentSearchType != null && ComboSearchType.Items.Contains(CurrentSearchType))
+            {
+                ComboSearchType.SelectedIndex = ComboSearchType.Items.IndexOf(CurrentSearchType);
+                ComboSearchType.SelectedItem = ComboSearchType.SelectedValue = CurrentSearchType;
+            }
+            else
+            {
+                ComboSearchType.SelectedIndex = 0;
+                ComboSearchType.SelectedItem = ComboSearchType.SelectedValue = ComboSearchType.Items[0];
+            }
+        }
+
+        private void PopulateComboBox(Type enumType, ComboBox box)
+        {
+            box.Items.Clear();
+            box.Items.AddRange(Enum.GetNames(enumType));
         }
 
         private void ValuesGridContextMenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)

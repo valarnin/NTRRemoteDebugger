@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NTRDebuggerTool.Objects;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -15,7 +16,6 @@ namespace NTRDebuggerTool.Remote
 
         public String IP { get; set; }
         public Int16 Port { get; set; }
-        public Dictionary<uint, byte[]> AddressesFound = new Dictionary<uint, byte[]>();
 
         public ReadOnlyDictionary<uint, uint> AddressSpaces;
 
@@ -24,11 +24,6 @@ namespace NTRDebuggerTool.Remote
 
         public uint ProgressScan = 0;
         public uint ProgressScanMax = 0;
-
-        internal uint MemoryReadAddress = 0;
-        internal byte[] SearchBytes;
-
-        internal bool NewSearch = true;
 
         internal TcpClient Client;
 
@@ -50,12 +45,12 @@ namespace NTRDebuggerTool.Remote
         private Thread PacketThread = null;
         internal bool CanSendHeartbeat = true;
         public List<string> Processes = new List<string>();
-        public bool IsMemorySearchFinished = false;
 
         public string SetCurrentOperationText = "";
         private NTRPacketReceiverThread PacketReceiverThread;
 
         internal XmlDocument ReleasesDocument;
+        public SearchCriteria SearchCriteria;
 
         #endregion
 
@@ -74,16 +69,6 @@ namespace NTRDebuggerTool.Remote
                 System.Console.WriteLine(e);
                 this.ReleasesDocument = null;
             }
-        }
-
-        #endregion
-
-        #region Other Methods
-
-        public void ResetSearch()
-        {
-            NewSearch = true;
-            AddressesFound.Clear();
         }
 
         #endregion
@@ -146,8 +131,14 @@ namespace NTRDebuggerTool.Remote
         {
             try
             {
-                Client.Close();
-                PacketThread.Abort();
+                if (Client != null)
+                {
+                    Client.Close();
+                }
+                if (PacketThread != null)
+                {
+                    PacketThread.Abort();
+                }
             }
             catch (Exception e)
             {
@@ -196,45 +187,21 @@ namespace NTRDebuggerTool.Remote
             this.SendPacket(PacketType.GeneralMemory, PacketCommand.Write, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, (uint)Values.Length }, Values);
         }
 
-        public void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size, byte Value)
+        public void SendReadMemoryPacket()
         {
-            SendReadMemoryPacket(ProcessID, Address, Size, new byte[] { Value });
+            SendReadMemoryPacketPre(SearchCriteria.ProcessID, SearchCriteria.StartAddress, SearchCriteria.Length);
         }
 
-        public void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size, ushort Value)
+        private void SendReadMemoryPacketPre(uint ProcessID, uint AddressSpace, uint Size)
         {
-            SendReadMemoryPacket(ProcessID, Address, Size, BitConverter.GetBytes(Value));
-        }
-
-        public void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size, uint Value)
-        {
-            SendReadMemoryPacket(ProcessID, Address, Size, BitConverter.GetBytes(Value));
-        }
-
-        public void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size, ulong Value)
-        {
-            SendReadMemoryPacket(ProcessID, Address, Size, BitConverter.GetBytes(Value));
-        }
-
-        public void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size, float Value)
-        {
-            SendReadMemoryPacket(ProcessID, Address, Size, BitConverter.GetBytes(Value));
-        }
-
-        public void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size, double Value)
-        {
-            SendReadMemoryPacket(ProcessID, Address, Size, BitConverter.GetBytes(Value));
-        }
-
-        public void SendReadMemoryPacket(uint ProcessID, uint AddressSpace, uint Size, byte[] SearchValue)
-        {
-            this.SearchBytes = SearchValue;
             this.LockControls = true;
-            if (AddressesFound.Count > 0)
+            SearchCriteria.AllSearchesComplete = false;
+            if (SearchCriteria.AddressesFound.Count > 0 && SearchCriteria.AddressesFound.Count < 200)
             {
                 //Clone the list to an array to prevent concurrent modification
-                foreach (uint Address in AddressesFound.Keys)
+                foreach (uint Address in SearchCriteria.AddressesFound.Keys)
                 {
+                    SearchCriteria.SearchComplete = false;
                     SendReadMemoryPacket(ProcessID, Address, Size);
                 }
             }
@@ -242,23 +209,25 @@ namespace NTRDebuggerTool.Remote
             {
                 foreach (uint ActualAddressSpace in AddressSpaces.Keys)
                 {
+                    SearchCriteria.SearchComplete = false;
                     SendReadMemoryPacket(ProcessID, ActualAddressSpace, AddressSpaces[ActualAddressSpace]);
                 }
             }
             else
             {
+                SearchCriteria.SearchComplete = false;
                 SendReadMemoryPacket(ProcessID, AddressSpace, Size);
             }
-            IsMemorySearchFinished = true;
+            SearchCriteria.AllSearchesComplete = SearchCriteria.SearchComplete = true;
             this.LockControls = false;
+            SearchCriteria.FirstSearch = false;
         }
 
         private void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size)
         {
             SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
-            this.MemoryReadAddress = Address;
             this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, Size });
-            while (MemoryReadAddress != uint.MaxValue)
+            while (SearchCriteria.SearchComplete != true)
             {
                 Thread.Sleep(100);
             }

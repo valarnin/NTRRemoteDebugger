@@ -228,39 +228,39 @@ namespace NTRDebuggerTool.Remote
         private void ReadMemoryPacket(uint DataLength)
         {
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = DataLength;
-            if (DataLength < this.NTRConnection.SearchBytes.Length)
+            if (DataLength < this.NTRConnection.SearchCriteria.SearchValue.Length)
             {
-                this.NTRConnection.MemoryReadAddress = uint.MaxValue;
+                this.NTRConnection.SearchCriteria.SearchComplete = true;
                 return;
             }
 
             byte[] Buffer = new byte[DataLength];
-            byte[] TemporaryBuffer = new byte[this.NTRConnection.SearchBytes.Length];
+            byte[] TemporaryBuffer = new byte[this.NTRConnection.SearchCriteria.SearchValue.Length];
             ReadBasePacket(Buffer);
 
             this.NTRConnection.SetCurrentOperationText = "Scanning Read Memory";
 
             uint RealAddress;
 
-            for (uint i = 0; i <= DataLength - this.NTRConnection.SearchBytes.Length; ++i)
+            for (uint i = 0; i <= DataLength - this.NTRConnection.SearchCriteria.SearchValue.Length; ++i)
             {
                 this.NTRConnection.ProgressScan = i;
-                RealAddress = (uint)(this.NTRConnection.MemoryReadAddress + i);
-                if (this.NTRConnection.NewSearch || this.NTRConnection.AddressesFound.ContainsKey(RealAddress))
+                RealAddress = (uint)(this.NTRConnection.SearchCriteria.StartAddress + i);
+                if (this.NTRConnection.SearchCriteria.FirstSearch || this.NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
                 {
                     Array.Copy(Buffer, i, TemporaryBuffer, 0, TemporaryBuffer.Length);
-                    if (!System.Linq.Enumerable.SequenceEqual(this.NTRConnection.SearchBytes, TemporaryBuffer))
+                    if (!System.Linq.Enumerable.SequenceEqual(this.NTRConnection.SearchCriteria.SearchValue, TemporaryBuffer))
                     {
-                        this.NTRConnection.AddressesFound.Remove(RealAddress);
+                        this.NTRConnection.SearchCriteria.AddressesFound.Remove(RealAddress);
                     }
-                    else if (!this.NTRConnection.AddressesFound.ContainsKey(RealAddress))
+                    else if (this.NTRConnection.SearchCriteria.FirstSearch && !this.NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
                     {
-                        this.NTRConnection.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
+                        this.NTRConnection.SearchCriteria.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
                     }
                 }
             }
 
-            this.NTRConnection.MemoryReadAddress = uint.MaxValue;
+            this.NTRConnection.SearchCriteria.SearchComplete = true;
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = this.NTRConnection.ProgressRead = this.NTRConnection.ProgressScan = 0;
         }
 

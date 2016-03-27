@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NTRDebuggerTool.Forms.FormEnums;
+using NTRDebuggerTool.Objects;
+using System;
 using System.Linq;
 using System.Threading;
 
@@ -12,7 +14,8 @@ namespace NTRDebuggerTool.Forms
 
         internal string CurrentSelectedProcess = "";
         internal string CurrentMemoryRange = "";
-        internal int CurrentSelectedDataType = 2;
+        internal DataTypeExact CurrentSelectedDataType;
+        internal SearchTypeBase CurrentSelectedSearchType;
         private MainForm Form;
 
         internal MainFormThreadEventDispatcher(MainForm Form)
@@ -86,48 +89,60 @@ namespace NTRDebuggerTool.Forms
 
         private void DoSearch()
         {
-            Form.NTRConnection.SetCurrentOperationText = "Searching Memory";
-            uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(CurrentSelectedProcess.Split('|')[0]), 0);
-            uint StartAddress, MemorySize;
-            if (CurrentMemoryRange.Equals("All"))
+            if (Form.NTRConnection.SearchCriteria == null)
             {
-                StartAddress = MemorySize = uint.MaxValue;
-            }
-            else
-            {
-                StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemoryStart.Text).Reverse().ToArray(), 0);
-                MemorySize = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemorySize.Text).Reverse().ToArray(), 0);
-            }
+                Form.NTRConnection.SearchCriteria = new SearchCriteria();
+                Form.NTRConnection.SearchCriteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(CurrentSelectedProcess.Split('|')[0]), 0);
 
-            if (Form.ResultsGrid.Rows.Count > 0 || Form.NTRConnection.AddressesFound.Count > 0)
-            {
-                MemorySize = Form.GetSearchMemorySize();
+                if (CurrentMemoryRange.Equals("All"))
+                {
+                    Form.NTRConnection.SearchCriteria.StartAddress = Form.NTRConnection.SearchCriteria.Length = uint.MaxValue;
+                }
+                else
+                {
+                    Form.NTRConnection.SearchCriteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemoryStart.Text).Reverse().ToArray(), 0);
+                    Form.NTRConnection.SearchCriteria.Length = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemorySize.Text).Reverse().ToArray(), 0);
+                }
+
+                if (Form.ResultsGrid.Rows.Count > 0 || Form.NTRConnection.SearchCriteria.AddressesFound.Count > 0)
+                {
+                    Form.NTRConnection.SearchCriteria.Length = Form.GetSearchMemorySize();
+                }
+                Form.NTRConnection.SearchCriteria.SearchType = this.CurrentSelectedSearchType;
+                Form.NTRConnection.SearchCriteria.DataType = this.CurrentSelectedDataType;
             }
+            Form.NTRConnection.SetCurrentOperationText = "Searching Memory";
 
             switch (CurrentSelectedDataType)
             {
-                case 0: //1 Byte
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, (byte)uint.Parse(Form.SearchValue.Text));
+                case DataTypeExact.Bytes1: //1 Byte
+                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes((byte)uint.Parse(Form.SearchValue.Text));
                     break;
-                case 1: //2 Bytes
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, ushort.Parse(Form.SearchValue.Text));
+                case DataTypeExact.Bytes2: //2 Bytes
+                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(ushort.Parse(Form.SearchValue.Text));
                     break;
-                case 2: //4 Bytes
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, uint.Parse(Form.SearchValue.Text));
+                case DataTypeExact.Bytes4: //4 Bytes
+                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(uint.Parse(Form.SearchValue.Text));
                     break;
-                case 3: //8 Bytes
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, ulong.Parse(Form.SearchValue.Text));
+                case DataTypeExact.Bytes8: //8 Bytes
+                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(ulong.Parse(Form.SearchValue.Text));
                     break;
-                case 4: //Float
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, float.Parse(Form.SearchValue.Text));
+                case DataTypeExact.Float: //Float
+                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(float.Parse(Form.SearchValue.Text));
                     break;
-                case 5: //Double
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, double.Parse(Form.SearchValue.Text));
+                case DataTypeExact.Double: //Double
+                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(double.Parse(Form.SearchValue.Text));
                     break;
-                case 6: //Raw Bytes
-                    Form.NTRConnection.SendReadMemoryPacket(ProcessID, StartAddress, MemorySize, Utilities.GetByteArrayFromByteString(Form.SearchValue.Text));
+                case DataTypeExact.Raw: //Raw Bytes
+                    Form.NTRConnection.SearchCriteria.SearchValue = Utilities.GetByteArrayFromByteString(Form.SearchValue.Text);
+                    break;
+                default: //Text
+                    Form.NTRConnection.SearchCriteria.SearchValue = System.Text.Encoding.Default.GetBytes(Form.SearchValue.Text);
                     break;
             }
+
+            Form.NTRConnection.SendReadMemoryPacket();
+
             Form.ControlEnabledSearchButton = true;
         }
     }

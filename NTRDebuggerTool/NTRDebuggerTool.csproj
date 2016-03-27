@@ -44,6 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Forms\FormEnums\DataType.cs" />
+    <Compile Include="Forms\FormEnums\SearchType.cs" />
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -51,6 +53,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\MainFormThreadEventDispatcher.cs" />
+    <Compile Include="Objects\SearchCriteria.cs" />
     <Compile Include="Remote\NTRPacketReceiverThread.cs" />
     <Compile Include="Remote\NTRRemoteConnection.cs" />
     <Compile Include="Program.cs" />
@@ -83,6 +86,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
