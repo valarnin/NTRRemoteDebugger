@@ -20,4 +20,4 @@ Tool to interface with NTR CFW's remote debugging.
 * Editing items in the bottom-right grid (the 'Values' grid) requires double clicking. This is strange behavior for the checkbox and dropdown cells.
 * The first half of the progress bar at the bottom is for receiving memory values from the 3DS. The second half is for searching for the value.
 * The progress bar does not work for narrowing search results, just be patient. It's about 1/3rd of a second per result check for me.
-* NTR's performance seems to degrade over time if the connection gets interrupted at all. I find that after about 10 interrupted connections, I have to reboot my 3DS to get NTR's Debugger to start responding properly again.
+* NTR's performance seems to degrade over time if the connection gets interrupted at all. I find that after about 10 interrupted connections, I have to reboot my 3DS to get NTR's Debugger to start responding properly again. Apparently running [NTR 3.3 fork](https://github.com/Shadowtrance/BootNTR) from Shadowtrance with the 3.2 ntr.bin (same repo) is better for stability and also works on 10.6.
