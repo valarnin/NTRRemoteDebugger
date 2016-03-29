@@ -143,7 +143,7 @@ namespace NTRDebuggerTool.Forms
 
             Form.NTRConnection.SendReadMemoryPacket();
 
-            Form.ControlEnabledSearchButton = true;
+            Form.SearchComplete = true;
         }
     }
 }

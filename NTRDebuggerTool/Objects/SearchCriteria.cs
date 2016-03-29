@@ -10,6 +10,7 @@ namespace NTRDebuggerTool.Objects
         public SearchTypeBase SearchType;
         public DataTypeExact DataType;
         public byte[] SearchValue;
+        public byte[] SearchValue2;
 
         public bool SearchComplete = false;
         public bool AllSearchesComplete = false;

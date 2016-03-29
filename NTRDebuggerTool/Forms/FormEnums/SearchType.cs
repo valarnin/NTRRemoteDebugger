@@ -30,7 +30,7 @@ namespace NTRDebuggerTool.Forms.FormEnums
     {
         Exact = 1,
         Range = 2,
-        Unknown = 7
+        Unknown = 9
     }
 
     public static class SearchTypeNumericTool
@@ -41,10 +41,12 @@ namespace NTRDebuggerTool.Forms.FormEnums
         {
             Mapping.Add("Exact", SearchTypeNumeric.Exact);
             Mapping.Add("Range", SearchTypeNumeric.Range);
-            Mapping.Add("IncreasedBy", SearchTypeNumeric.IncreasedBy);
-            Mapping.Add("DecreasedBy", SearchTypeNumeric.DecreasedBy);
+            Mapping.Add("Increased By", SearchTypeNumeric.IncreasedBy);
+            Mapping.Add("Decreased By", SearchTypeNumeric.DecreasedBy);
             Mapping.Add("Increased", SearchTypeNumeric.Increased);
             Mapping.Add("Decreased", SearchTypeNumeric.Decreased);
+            Mapping.Add("Same", SearchTypeNumeric.Same);
+            Mapping.Add("Different", SearchTypeNumeric.Different);
         }
 
         public static string[] GetValues()
@@ -65,7 +67,9 @@ namespace NTRDebuggerTool.Forms.FormEnums
         IncreasedBy = 3,
         DecreasedBy = 4,
         Increased = 5,
-        Decreased = 6
+        Decreased = 6,
+        Same = 7,
+        Different = 8
     }
 
     public static class SearchTypeTextTool
@@ -90,7 +94,9 @@ namespace NTRDebuggerTool.Forms.FormEnums
 
     public enum SearchTypeText
     {
-        Exact = 1
+        Exact = 1,
+        Same = 7,
+        Different = 8
     }
 
     public static class SearchTypeBaseTool
@@ -101,8 +107,8 @@ namespace NTRDebuggerTool.Forms.FormEnums
         {
             Mapping.Add("Exact", SearchTypeBase.Exact);
             Mapping.Add("Range", SearchTypeBase.Range);
-            Mapping.Add("IncreasedBy", SearchTypeBase.IncreasedBy);
-            Mapping.Add("DecreasedBy", SearchTypeBase.DecreasedBy);
+            Mapping.Add("Increased By", SearchTypeBase.IncreasedBy);
+            Mapping.Add("Decreased By", SearchTypeBase.DecreasedBy);
             Mapping.Add("Increased", SearchTypeBase.Increased);
             Mapping.Add("Decreased", SearchTypeBase.Decreased);
             Mapping.Add("Unknown", SearchTypeBase.Unknown);
@@ -127,6 +133,8 @@ namespace NTRDebuggerTool.Forms.FormEnums
         DecreasedBy = 4,
         Increased = 5,
         Decreased = 6,
-        Unknown = 7
+        Same = 7,
+        Different = 8,
+        Unknown = 9
     }
 }

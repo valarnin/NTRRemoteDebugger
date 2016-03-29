@@ -37,6 +37,7 @@ namespace NTRDebuggerTool.Forms
         internal NTRRemoteConnection NTRConnection;
 
         private MainFormThreadEventDispatcher ThreadEventDispatcher;
+        internal bool SearchComplete = false;
 
         public MainForm(NTRRemoteConnection NTRConnection)
         {
@@ -179,17 +180,23 @@ namespace NTRDebuggerTool.Forms
             {
                 LabelLastSearch.Text = "Last Search\n" + NTRConnection.SearchCriteria.AddressesFound.Count + " results found for " + GetDisplayForByteArray(NTRConnection.SearchCriteria.SearchValue);
 
-                if (NTRConnection.SearchCriteria.SearchComplete && NTRConnection.SearchCriteria.AddressesFound.Count < 50000)
+                if (SearchComplete)
                 {
-                    ResultsGrid.Rows.Clear();
-                    foreach (uint Address in NTRConnection.SearchCriteria.AddressesFound.Keys)
+                    ControlEnabledSearchButton = true;
+                    if (NTRConnection.SearchCriteria.AddressesFound.Count < 50000)
                     {
-                        int Row = ResultsGrid.Rows.Add();
-                        ResultsGrid[0, Row].Value = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
-                        ResultsGrid[1, Row].Value = GetDisplayForByteArray(NTRConnection.SearchCriteria.AddressesFound[Address]);
+                        ResultsGrid.Rows.Clear();
+                        foreach (uint Address in NTRConnection.SearchCriteria.AddressesFound.Keys)
+                        {
+                            int Row = ResultsGrid.Rows.Add();
+                            ResultsGrid[0, Row].Value = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
+                            ResultsGrid[1, Row].Value = GetDisplayForByteArray(NTRConnection.SearchCriteria.AddressesFound[Address]);
+                        }
                     }
+                    NTRConnection.SetCurrentOperationText = "";
+                    ComboDataType_SelectedValueChanged(null, null);
+                    SearchComplete = false;
                 }
-                NTRConnection.SetCurrentOperationText = "";
             }
 
             if (SetConnectText != null)
@@ -426,7 +433,7 @@ namespace NTRDebuggerTool.Forms
 
         private void SearchButton_Click(object sender, EventArgs e)
         {
-            SearchButton.Enabled = ControlEnabledSearchButton = false;
+            SearchButton.Enabled = ControlEnabledSearchButton = ControlEnabledDataType = ControlEnabledMemoryRange = false;
             ThreadEventDispatcher.CurrentSelectedDataType = DataTypeExactTool.GetValue(ComboDataType.SelectedItem.ToString());
             ThreadEventDispatcher.CurrentSelectedSearchType = SearchTypeBaseTool.GetValue(ComboSearchType.SelectedItem.ToString());
             ThreadEventDispatcher.CurrentMemoryRange = this.MemoryRange.Text;
