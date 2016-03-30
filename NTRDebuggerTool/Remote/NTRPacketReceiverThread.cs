@@ -254,7 +254,7 @@ namespace NTRDebuggerTool.Remote
                     {
                         this.NTRConnection.SearchCriteria.AddressesFound.Remove(RealAddress);
                     }
-                    else if (this.NTRConnection.SearchCriteria.FirstSearch && !this.NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    else
                     {
                         this.NTRConnection.SearchCriteria.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
                     }
@@ -271,6 +271,11 @@ namespace NTRDebuggerTool.Remote
 
         private bool CheckCriteria(uint RealAddress, byte[] RemoteValue)
         {
+            //Debug code
+            if (RealAddress == 0x080823B4)
+            {
+                if (true) ;
+            }
             switch (NTRConnection.SearchCriteria.SearchType)
             {
                 case SearchTypeBase.Exact:

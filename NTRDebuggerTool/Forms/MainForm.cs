@@ -183,7 +183,7 @@ namespace NTRDebuggerTool.Forms
                 if (SearchComplete)
                 {
                     ControlEnabledSearchButton = true;
-                    if (NTRConnection.SearchCriteria.AddressesFound.Count < 50000)
+                    if (NTRConnection.SearchCriteria.AddressesFound.Count < Config.MaxValuesToDisplay)
                     {
                         ResultsGrid.Rows.Clear();
                         foreach (uint Address in NTRConnection.SearchCriteria.AddressesFound.Keys)
@@ -433,6 +433,15 @@ namespace NTRDebuggerTool.Forms
 
         private void SearchButton_Click(object sender, EventArgs e)
         {
+            MemoryStart.Text = MemoryStart.Text.PadLeft(8, '0');
+            MemorySize.Text = MemorySize.Text.PadLeft(8, '0');
+            uint StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(MemoryStart.Text).Reverse().ToArray(), 0);
+            uint EndAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(TextEndAddress.Text).Reverse().ToArray(), 0);
+            if (!IsValidMemoryAddress(StartAddress) || !IsValidMemoryAddress(EndAddress))
+            {
+                NTRConnection.SetCurrentOperationText = "Invalid start address or size!";
+                return;
+            }
             SearchButton.Enabled = ControlEnabledSearchButton = ControlEnabledDataType = ControlEnabledMemoryRange = false;
             ThreadEventDispatcher.CurrentSelectedDataType = DataTypeExactTool.GetValue(ComboDataType.SelectedItem.ToString());
             ThreadEventDispatcher.CurrentSelectedSearchType = SearchTypeBaseTool.GetValue(ComboSearchType.SelectedItem.ToString());
@@ -448,17 +457,24 @@ namespace NTRDebuggerTool.Forms
                 case SearchTypeBase.Exact:
                     ComboDataType.Items.Clear();
                     ComboDataType.Items.AddRange(DataTypeExactTool.GetValues());
+                    SearchValue.Width = 286;
+                    SearchValue2.Visible = LabelDash.Visible = false;
                     break;
                 case SearchTypeBase.Range:
+                    ComboDataType.Items.Clear();
+                    ComboDataType.Items.AddRange(DataTypeNumericTool.GetValues());
+                    SearchValue.Width = 136;
+                    SearchValue2.Visible = LabelDash.Visible = true;
+                    break;
                 case SearchTypeBase.IncreasedBy:
                 case SearchTypeBase.DecreasedBy:
                 case SearchTypeBase.Increased:
                 case SearchTypeBase.Decreased:
-                    ComboDataType.Items.Clear();
-                    ComboDataType.Items.AddRange(DataTypeNumericTool.GetValues());
-                    break;
                 case SearchTypeBase.Unknown:
                     ComboDataType.Items.Clear();
+                    ComboDataType.Items.AddRange(DataTypeNumericTool.GetValues());
+                    SearchValue.Width = 286;
+                    SearchValue2.Visible = LabelDash.Visible = false;
                     break;
             }
             if (CurrentDataType != null && ComboDataType.Items.Contains(CurrentDataType))
@@ -601,6 +617,30 @@ namespace NTRDebuggerTool.Forms
                 }
             }
             return 0;
+        }
+
+        private void ButtonConfig_Click(object sender, EventArgs e)
+        {
+            ConfigDialog Dialog = new ConfigDialog();
+            Dialog.Show(this);
+        }
+
+        private void Memory_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(MemoryStart.Text) && !string.IsNullOrWhiteSpace(MemorySize.Text))
+            {
+                string Start = MemoryStart.Text.PadLeft(8, '0');
+                string Size = MemorySize.Text.PadLeft(8, '0');
+                uint StartInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Start), 0);
+                uint SizeInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Size), 0);
+                uint EndInt = StartInt + SizeInt;
+                string End = Utilities.GetStringFromByteArray(BitConverter.GetBytes(EndInt));
+                TextEndAddress.Text = End;
+            }
+            else
+            {
+                TextEndAddress.Text = "";
+            }
         }
 
     }

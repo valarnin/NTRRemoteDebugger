@@ -70,8 +70,11 @@
             this.LabelSearchValue = new System.Windows.Forms.Label();
             this.LabelSearchType = new System.Windows.Forms.Label();
             this.ComboSearchType = new System.Windows.Forms.ComboBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.TextEndAddress = new System.Windows.Forms.TextBox();
             this.LabelEndAddress = new System.Windows.Forms.Label();
+            this.SearchValue2 = new System.Windows.Forms.TextBox();
+            this.LabelDash = new System.Windows.Forms.Label();
+            this.ButtonConfig = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -397,6 +400,7 @@
             this.MemoryStart.Name = "MemoryStart";
             this.MemoryStart.Size = new System.Drawing.Size(65, 20);
             this.MemoryStart.TabIndex = 27;
+            this.MemoryStart.TextChanged += new System.EventHandler(this.Memory_TextChanged);
             // 
             // MemorySize
             // 
@@ -405,6 +409,7 @@
             this.MemorySize.Name = "MemorySize";
             this.MemorySize.Size = new System.Drawing.Size(65, 20);
             this.MemorySize.TabIndex = 28;
+            this.MemorySize.TextChanged += new System.EventHandler(this.Memory_TextChanged);
             // 
             // LabelCurrentOperation
             // 
@@ -473,14 +478,14 @@
             this.ComboSearchType.TabIndex = 35;
             this.ComboSearchType.SelectionChangeCommitted += new System.EventHandler(this.ComboSearchType_SelectedValueChanged);
             // 
-            // textBox1
+            // TextEndAddress
             // 
-            this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(628, 84);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(65, 20);
-            this.textBox1.TabIndex = 36;
+            this.TextEndAddress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.TextEndAddress.Enabled = false;
+            this.TextEndAddress.Location = new System.Drawing.Point(628, 84);
+            this.TextEndAddress.Name = "TextEndAddress";
+            this.TextEndAddress.Size = new System.Drawing.Size(65, 20);
+            this.TextEndAddress.TabIndex = 36;
             // 
             // LabelEndAddress
             // 
@@ -492,13 +497,45 @@
             this.LabelEndAddress.Text = "End Address";
             this.LabelEndAddress.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // SearchValue2
+            // 
+            this.SearchValue2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.SearchValue2.Location = new System.Drawing.Point(636, 134);
+            this.SearchValue2.Name = "SearchValue2";
+            this.SearchValue2.Size = new System.Drawing.Size(136, 20);
+            this.SearchValue2.TabIndex = 38;
+            this.SearchValue2.Visible = false;
+            // 
+            // LabelDash
+            // 
+            this.LabelDash.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.LabelDash.Location = new System.Drawing.Point(623, 132);
+            this.LabelDash.Name = "LabelDash";
+            this.LabelDash.Size = new System.Drawing.Size(11, 23);
+            this.LabelDash.TabIndex = 39;
+            this.LabelDash.Text = "-";
+            this.LabelDash.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.LabelDash.Visible = false;
+            // 
+            // ButtonConfig
+            // 
+            this.ButtonConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ButtonConfig.Image = global::NTRDebuggerTool.Properties.Resources.cog2;
+            this.ButtonConfig.Location = new System.Drawing.Point(398, 9);
+            this.ButtonConfig.Name = "ButtonConfig";
+            this.ButtonConfig.Size = new System.Drawing.Size(30, 30);
+            this.ButtonConfig.TabIndex = 40;
+            this.ButtonConfig.UseVisualStyleBackColor = true;
+            this.ButtonConfig.Click += new System.EventHandler(this.ButtonConfig_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.ButtonConfig);
             this.Controls.Add(this.LabelEndAddress);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.TextEndAddress);
             this.Controls.Add(this.ComboSearchType);
             this.Controls.Add(this.LabelSearchType);
             this.Controls.Add(this.LabelSearchValue);
@@ -528,6 +565,8 @@
             this.Controls.Add(this.ResultsGrid);
             this.Controls.Add(this.SearchValue);
             this.Controls.Add(this.ComboDataType);
+            this.Controls.Add(this.LabelDash);
+            this.Controls.Add(this.SearchValue2);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(800, 99999);
@@ -583,11 +622,14 @@
         private System.Windows.Forms.Label LabelSearchValue;
         private System.Windows.Forms.Label LabelSearchType;
         private System.Windows.Forms.ComboBox ComboSearchType;
-        internal System.Windows.Forms.TextBox textBox1;
+        internal System.Windows.Forms.TextBox TextEndAddress;
         private System.Windows.Forms.Label LabelEndAddress;
         private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
         private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
+        internal System.Windows.Forms.TextBox SearchValue2;
+        private System.Windows.Forms.Label LabelDash;
+        private System.Windows.Forms.Button ButtonConfig;
     }
 }

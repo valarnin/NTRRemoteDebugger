@@ -225,7 +225,8 @@ namespace NTRDebuggerTool.Remote
 
         private void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size)
         {
-            SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
+            SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray()) + " - " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address + Size).Reverse().ToArray());
+
             this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, Size });
             while (SearchCriteria.SearchComplete != true)
             {

@@ -89,10 +89,24 @@ namespace NTRDebuggerTool.Forms
 
         private void DoSearch()
         {
+            if (CurrentSelectedSearchType != SearchTypeBase.Unknown)
+            {
+                if (string.IsNullOrWhiteSpace(Form.SearchValue.Text))
+                {
+                    Form.NTRConnection.SetCurrentOperationText = "Invalid search criteria!";
+                    return;
+                }
+                if (CurrentSelectedSearchType == SearchTypeBase.Range && string.IsNullOrWhiteSpace(Form.SearchValue2.Text))
+                {
+                    Form.NTRConnection.SetCurrentOperationText = "Invalid range criteria!";
+                    return;
+                }
+            }
             if (Form.NTRConnection.SearchCriteria == null)
             {
                 Form.NTRConnection.SearchCriteria = new SearchCriteria();
                 Form.NTRConnection.SearchCriteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(CurrentSelectedProcess.Split('|')[0]), 0);
+                Form.NTRConnection.SearchCriteria.DataType = this.CurrentSelectedDataType;
 
                 if (CurrentMemoryRange.Equals("All"))
                 {
@@ -103,47 +117,48 @@ namespace NTRDebuggerTool.Forms
                     Form.NTRConnection.SearchCriteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemoryStart.Text).Reverse().ToArray(), 0);
                     Form.NTRConnection.SearchCriteria.Length = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemorySize.Text).Reverse().ToArray(), 0);
                 }
-
-                if (Form.ResultsGrid.Rows.Count > 0 || Form.NTRConnection.SearchCriteria.AddressesFound.Count > 0)
-                {
-                    Form.NTRConnection.SearchCriteria.Length = Form.GetSearchMemorySize();
-                }
-                Form.NTRConnection.SearchCriteria.SearchType = this.CurrentSelectedSearchType;
-                Form.NTRConnection.SearchCriteria.DataType = this.CurrentSelectedDataType;
             }
+
+            if (Form.ResultsGrid.Rows.Count > 0 || Form.NTRConnection.SearchCriteria.AddressesFound.Count > 0)
+            {
+                Form.NTRConnection.SearchCriteria.Length = Form.GetSearchMemorySize();
+            }
+            Form.NTRConnection.SearchCriteria.SearchType = this.CurrentSelectedSearchType;
+
             Form.NTRConnection.SetCurrentOperationText = "Searching Memory";
 
-            switch (CurrentSelectedDataType)
+            Form.NTRConnection.SearchCriteria.SearchValue = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue.Text);
+            if (CurrentSelectedSearchType == SearchTypeBase.Range)
             {
-                case DataTypeExact.Bytes1: //1 Byte
-                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes((byte)uint.Parse(Form.SearchValue.Text));
-                    break;
-                case DataTypeExact.Bytes2: //2 Bytes
-                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(ushort.Parse(Form.SearchValue.Text));
-                    break;
-                case DataTypeExact.Bytes4: //4 Bytes
-                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(uint.Parse(Form.SearchValue.Text));
-                    break;
-                case DataTypeExact.Bytes8: //8 Bytes
-                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(ulong.Parse(Form.SearchValue.Text));
-                    break;
-                case DataTypeExact.Float: //Float
-                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(float.Parse(Form.SearchValue.Text));
-                    break;
-                case DataTypeExact.Double: //Double
-                    Form.NTRConnection.SearchCriteria.SearchValue = BitConverter.GetBytes(double.Parse(Form.SearchValue.Text));
-                    break;
-                case DataTypeExact.Raw: //Raw Bytes
-                    Form.NTRConnection.SearchCriteria.SearchValue = Utilities.GetByteArrayFromByteString(Form.SearchValue.Text);
-                    break;
-                default: //Text
-                    Form.NTRConnection.SearchCriteria.SearchValue = System.Text.Encoding.Default.GetBytes(Form.SearchValue.Text);
-                    break;
+                Form.NTRConnection.SearchCriteria.SearchValue2 = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue2.Text);
             }
 
             Form.NTRConnection.SendReadMemoryPacket();
 
             Form.SearchComplete = true;
+        }
+
+        private byte[] GetValueForDataType(DataTypeExact CurrentSelectedDataType, string Value)
+        {
+            switch (CurrentSelectedDataType)
+            {
+                case DataTypeExact.Bytes1: //1 Byte
+                    return BitConverter.GetBytes((byte)uint.Parse(Value));
+                case DataTypeExact.Bytes2: //2 Bytes
+                    return BitConverter.GetBytes(ushort.Parse(Value));
+                case DataTypeExact.Bytes4: //4 Bytes
+                    return BitConverter.GetBytes(uint.Parse(Value));
+                case DataTypeExact.Bytes8: //8 Bytes
+                    return BitConverter.GetBytes(ulong.Parse(Value));
+                case DataTypeExact.Float: //Float
+                    return BitConverter.GetBytes(float.Parse(Value));
+                case DataTypeExact.Double: //Double
+                    return BitConverter.GetBytes(double.Parse(Value));
+                case DataTypeExact.Raw: //Raw Bytes
+                    return Utilities.GetByteArrayFromByteString(Value);
+                default: //Text
+                    return System.Text.Encoding.Default.GetBytes(Value);
+            }
         }
     }
 }
