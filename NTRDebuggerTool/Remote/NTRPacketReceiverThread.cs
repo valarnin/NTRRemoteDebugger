@@ -212,8 +212,10 @@ namespace NTRDebuggerTool.Remote
                     continue;
                 }
                 string[] Parts = Line.Split(new String[] { " , " }, StringSplitOptions.None);
-                uint Start = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Parts[0].Split(new String[] { " - " }, StringSplitOptions.None)[0].Trim()).Reverse().ToArray(), 0);
-                uint Size = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Parts[1].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim()).Reverse().ToArray(), 0);
+                string StartString = Parts[0].Split(new String[] { " - " }, StringSplitOptions.None)[0].Trim().PadLeft(8, '0');
+                string SizeString = Parts[1].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim().PadLeft(8, '0');
+                uint Start = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(StartString).Reverse().ToArray(), 0);
+                uint Size = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(SizeString).Reverse().ToArray(), 0);
 
                 AddressSpaces.Add(Start, Size);
             }
@@ -250,13 +252,14 @@ namespace NTRDebuggerTool.Remote
                 if (this.NTRConnection.SearchCriteria.FirstSearch || this.NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
                 {
                     Array.Copy(Buffer, i, TemporaryBuffer, 0, TemporaryBuffer.Length);
-                    if (!CheckCriteria(RealAddress, TemporaryBuffer))
+                    if (CheckCriteria(RealAddress, TemporaryBuffer))
                     {
                         this.NTRConnection.SearchCriteria.AddressesFound.Remove(RealAddress);
+                        this.NTRConnection.SearchCriteria.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
                     }
                     else
                     {
-                        this.NTRConnection.SearchCriteria.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
+                        this.NTRConnection.SearchCriteria.AddressesFound.Remove(RealAddress);
                     }
                 }
             }

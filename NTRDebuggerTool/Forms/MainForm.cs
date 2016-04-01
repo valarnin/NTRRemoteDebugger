@@ -269,6 +269,8 @@ namespace NTRDebuggerTool.Forms
 
         private void ResetButton_Click(object sender, EventArgs e)
         {
+            ComboSearchType.Items.Clear();
+            ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());
             NTRConnection.SearchCriteria = null;
             ResultsGrid.Rows.Clear();
             ControlEnabledSearchType = ControlEnabledMemoryRange = ControlEnabledDataType = true;

@@ -110,7 +110,14 @@ namespace NTRDebuggerTool.Remote
                 {
                     Client = new TcpClient();
                     Client.NoDelay = true;
-                    Client.Connect(IP, Port);
+                    IAsyncResult res = Client.BeginConnect(IP, Port, null, null);
+                    if (!res.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(3)))
+                    {
+                        Client.Close();
+                        Client = null;
+                        throw new Exception("Connect timeout");
+                    }
+                    Client.EndConnect(res);
                     PacketThread = new Thread(new ThreadStart(this.PacketReceiverThread.ThreadReceivePackets));
                     PacketThread.Name = "ReadPacketsThread";
                     PacketThread.Start();
@@ -199,11 +206,13 @@ namespace NTRDebuggerTool.Remote
             if (SearchCriteria.AddressesFound.Count > 0 && SearchCriteria.AddressesFound.Count < 200)
             {
                 //Clone the list to an array to prevent concurrent modification
-                foreach (uint Address in SearchCriteria.AddressesFound.Keys)
+                foreach (uint Address in new List<uint>(SearchCriteria.AddressesFound.Keys))
                 {
                     SearchCriteria.SearchComplete = false;
+                    SearchCriteria.StartAddress = Address;
                     SendReadMemoryPacket(ProcessID, Address, Size);
                 }
+                SearchCriteria.StartAddress = AddressSpace;
             }
             else if (AddressSpace == uint.MaxValue)
             {

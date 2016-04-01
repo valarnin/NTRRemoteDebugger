@@ -9,6 +9,8 @@ namespace NTRDebuggerTool
 {
     static class Program
     {
+        public const bool DEBUG = false;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -35,9 +37,17 @@ namespace NTRDebuggerTool
                 }
             }
 
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm(new NTRRemoteConnection()));
+            //Debug code
+            if (!DEBUG)
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new MainForm(new NTRRemoteConnection()));
+            }
+            else
+            {
+                Debug.Execute();
+            }
         }
     }
 }

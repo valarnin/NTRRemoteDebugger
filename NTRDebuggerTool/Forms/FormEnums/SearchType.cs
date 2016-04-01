@@ -111,6 +111,8 @@ namespace NTRDebuggerTool.Forms.FormEnums
             Mapping.Add("Decreased By", SearchTypeBase.DecreasedBy);
             Mapping.Add("Increased", SearchTypeBase.Increased);
             Mapping.Add("Decreased", SearchTypeBase.Decreased);
+            Mapping.Add("Same", SearchTypeBase.Same);
+            Mapping.Add("Different", SearchTypeBase.Different);
             Mapping.Add("Unknown", SearchTypeBase.Unknown);
         }
 

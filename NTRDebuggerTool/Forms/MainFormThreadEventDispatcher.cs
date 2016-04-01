@@ -89,7 +89,7 @@ namespace NTRDebuggerTool.Forms
 
         private void DoSearch()
         {
-            if (CurrentSelectedSearchType != SearchTypeBase.Unknown)
+            if (CurrentSelectedSearchType != SearchTypeBase.Same && CurrentSelectedSearchType != SearchTypeBase.Different && CurrentSelectedSearchType != SearchTypeBase.Unknown)
             {
                 if (string.IsNullOrWhiteSpace(Form.SearchValue.Text))
                 {
@@ -127,7 +127,14 @@ namespace NTRDebuggerTool.Forms
 
             Form.NTRConnection.SetCurrentOperationText = "Searching Memory";
 
-            Form.NTRConnection.SearchCriteria.SearchValue = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue.Text);
+            string Value1 = Form.SearchValue.Text;
+
+            if (string.IsNullOrWhiteSpace(Value1))
+            {
+                Value1 = "0";
+            }
+
+            Form.NTRConnection.SearchCriteria.SearchValue = GetValueForDataType(CurrentSelectedDataType, Value1);
             if (CurrentSelectedSearchType == SearchTypeBase.Range)
             {
                 Form.NTRConnection.SearchCriteria.SearchValue2 = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue2.Text);
@@ -143,7 +150,7 @@ namespace NTRDebuggerTool.Forms
             switch (CurrentSelectedDataType)
             {
                 case DataTypeExact.Bytes1: //1 Byte
-                    return BitConverter.GetBytes((byte)uint.Parse(Value));
+                    return new byte[] { (byte)uint.Parse(Value) };
                 case DataTypeExact.Bytes2: //2 Bytes
                     return BitConverter.GetBytes(ushort.Parse(Value));
                 case DataTypeExact.Bytes4: //4 Bytes
