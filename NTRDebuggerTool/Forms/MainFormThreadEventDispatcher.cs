@@ -66,7 +66,15 @@ namespace NTRDebuggerTool.Forms
                 Form.NTRConnection.SetCurrentOperationText = "Connecting";
                 Form.NTRConnection.IP = Form.IP.Text;
                 Form.NTRConnection.Port = short.Parse(Form.Port.Text);
-                if (Form.NTRConnection.Connect())
+
+                bool Connected = false;
+
+                for (int i = 0; i < 5 && !Connected; ++i)
+                {
+                    Connected = Form.NTRConnection.Connect();
+                }
+
+                if (Connected)
                 {
                     Form.SetConnectText = "Disconnect";
                     Form.NTRConnection.SetCurrentOperationText = "Fetching Processes";
@@ -84,7 +92,18 @@ namespace NTRDebuggerTool.Forms
         {
             Form.SetConnectedControls(false);
             Form.NTRConnection.SetCurrentOperationText = "Fetching Memory Ranges";
+            //Dummy search criteria to prevent operation collision
+            while (Form.NTRConnection.SearchCriteria.Count > 0)
+            {
+                Thread.Sleep(10);
+            }
+            Form.NTRConnection.SearchCriteria.Add(new SearchCriteria());
             Form.NTRConnection.SendReadMemoryAddressesPacket(CurrentSelectedProcess.Split('|')[0]);
+            while (!Form.NTRConnection.IsMemoryListUpdated && !Form.ControlEnabledButtonOpenProcess)
+            {
+                Thread.Sleep(10);
+            }
+            Form.NTRConnection.SearchCriteria.RemoveAt(0);
         }
 
         private void DoSearch()
@@ -102,28 +121,23 @@ namespace NTRDebuggerTool.Forms
                     return;
                 }
             }
-            if (Form.NTRConnection.SearchCriteria == null)
+            if (Form.LastSearchCriteria == null)
             {
-                Form.NTRConnection.SearchCriteria = new SearchCriteria();
-                Form.NTRConnection.SearchCriteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(CurrentSelectedProcess.Split('|')[0]), 0);
-                Form.NTRConnection.SearchCriteria.DataType = this.CurrentSelectedDataType;
+                Form.LastSearchCriteria = new SearchCriteria();
+                Form.LastSearchCriteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(CurrentSelectedProcess.Split('|')[0]), 0);
+                Form.LastSearchCriteria.DataType = this.CurrentSelectedDataType;
 
                 if (CurrentMemoryRange.Equals("All"))
                 {
-                    Form.NTRConnection.SearchCriteria.StartAddress = Form.NTRConnection.SearchCriteria.Length = uint.MaxValue;
+                    Form.LastSearchCriteria.StartAddress = Form.LastSearchCriteria.Length = uint.MaxValue;
                 }
                 else
                 {
-                    Form.NTRConnection.SearchCriteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemoryStart.Text).Reverse().ToArray(), 0);
-                    Form.NTRConnection.SearchCriteria.Length = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemorySize.Text).Reverse().ToArray(), 0);
+                    Form.LastSearchCriteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemoryStart.Text).Reverse().ToArray(), 0);
+                    Form.LastSearchCriteria.Length = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Form.MemorySize.Text).Reverse().ToArray(), 0);
                 }
             }
-
-            if (Form.ResultsGrid.Rows.Count > 0 || Form.NTRConnection.SearchCriteria.AddressesFound.Count > 0)
-            {
-                Form.NTRConnection.SearchCriteria.Length = Form.GetSearchMemorySize();
-            }
-            Form.NTRConnection.SearchCriteria.SearchType = this.CurrentSelectedSearchType;
+            Form.LastSearchCriteria.SearchType = this.CurrentSelectedSearchType;
 
             Form.NTRConnection.SetCurrentOperationText = "Searching Memory";
 
@@ -134,13 +148,15 @@ namespace NTRDebuggerTool.Forms
                 Value1 = "0";
             }
 
-            Form.NTRConnection.SearchCriteria.SearchValue = GetValueForDataType(CurrentSelectedDataType, Value1);
+            Form.LastSearchCriteria.SearchValue = GetValueForDataType(CurrentSelectedDataType, Value1);
             if (CurrentSelectedSearchType == SearchTypeBase.Range)
             {
-                Form.NTRConnection.SearchCriteria.SearchValue2 = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue2.Text);
+                Form.LastSearchCriteria.SearchValue2 = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue2.Text);
             }
 
-            Form.NTRConnection.SendReadMemoryPacket();
+            Form.NTRConnection.SearchCriteria.Add(Form.LastSearchCriteria);
+
+            Form.NTRConnection.SendReadMemoryPacket(Form.LastSearchCriteria);
 
             Form.SearchComplete = true;
         }

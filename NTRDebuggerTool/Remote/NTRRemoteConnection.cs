@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -13,6 +14,8 @@ namespace NTRDebuggerTool.Remote
     public class NTRRemoteConnection
     {
         #region Members
+
+        public string HardwarePID = null;
 
         public String IP { get; set; }
         public Int16 Port { get; set; }
@@ -47,10 +50,12 @@ namespace NTRDebuggerTool.Remote
         public List<string> Processes = new List<string>();
 
         public string SetCurrentOperationText = "";
+        public string SetCurrentOperationText2 = "";
         private NTRPacketReceiverThread PacketReceiverThread;
 
         internal XmlDocument ReleasesDocument;
-        public SearchCriteria SearchCriteria;
+        public List<SearchCriteria> SearchCriteria = new List<SearchCriteria>();
+        private Stopwatch SearchTimerStopwatch = new Stopwatch();
 
         #endregion
 
@@ -153,6 +158,7 @@ namespace NTRDebuggerTool.Remote
             }
             Client = null;
             IsConnected = false;
+            HardwarePID = null;
         }
 
         #endregion
@@ -194,54 +200,75 @@ namespace NTRDebuggerTool.Remote
             this.SendPacket(PacketType.GeneralMemory, PacketCommand.Write, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, (uint)Values.Length }, Values);
         }
 
-        public void SendReadMemoryPacket()
+        public void SendReadMemoryPacket(SearchCriteria NewSearchCriteria)
         {
-            SendReadMemoryPacketPre(SearchCriteria.ProcessID, SearchCriteria.StartAddress, SearchCriteria.Length);
+            if (!NewSearchCriteria.HideSearch)
+            {
+                this.LockControls = true;
+            }
+            while (SearchCriteria[0] != NewSearchCriteria)
+            {
+                Thread.Sleep(10);
+            }
+            SearchTimerStopwatch.Start();
+            SendReadMemoryPacketPre(SearchCriteria[0].ProcessID, SearchCriteria[0].StartAddress, SearchCriteria[0].Length);
+            SearchTimerStopwatch.Stop();
+            NewSearchCriteria.Duration = (uint)SearchTimerStopwatch.ElapsedMilliseconds;
+            SearchTimerStopwatch.Reset();
+            if (!NewSearchCriteria.HideSearch)
+            {
+                this.LockControls = false;
+            }
         }
 
         private void SendReadMemoryPacketPre(uint ProcessID, uint AddressSpace, uint Size)
         {
-            this.LockControls = true;
-            SearchCriteria.AllSearchesComplete = false;
-            if (SearchCriteria.AddressesFound.Count > 0 && SearchCriteria.AddressesFound.Count < 200)
+            SearchCriteria[0].AllSearchesComplete = false;
+            if (SearchCriteria[0].AddressesFound.Count > 0 && SearchCriteria[0].AddressesFound.Count < 200)
             {
                 //Clone the list to an array to prevent concurrent modification
-                foreach (uint Address in new List<uint>(SearchCriteria.AddressesFound.Keys))
+                foreach (uint Address in new List<uint>(SearchCriteria[0].AddressesFound.Keys))
                 {
-                    SearchCriteria.SearchComplete = false;
-                    SearchCriteria.StartAddress = Address;
-                    SendReadMemoryPacket(ProcessID, Address, Size);
+                    SearchCriteria[0].SearchComplete = false;
+                    SearchCriteria[0].StartAddress = Address;
+                    SendReadMemoryPacket(ProcessID, Address, (uint)SearchCriteria[0].SearchValue.Length);
                 }
-                SearchCriteria.StartAddress = AddressSpace;
+                SearchCriteria[0].StartAddress = AddressSpace;
             }
             else if (AddressSpace == uint.MaxValue)
             {
                 foreach (uint ActualAddressSpace in AddressSpaces.Keys)
                 {
-                    SearchCriteria.SearchComplete = false;
+                    SearchCriteria[0].SearchComplete = false;
                     SendReadMemoryPacket(ProcessID, ActualAddressSpace, AddressSpaces[ActualAddressSpace]);
                 }
             }
             else
             {
-                SearchCriteria.SearchComplete = false;
+                SearchCriteria[0].SearchComplete = false;
                 SendReadMemoryPacket(ProcessID, AddressSpace, Size);
             }
-            SearchCriteria.AllSearchesComplete = SearchCriteria.SearchComplete = true;
-            this.LockControls = false;
-            SearchCriteria.FirstSearch = false;
+            SearchCriteria[0].AllSearchesComplete = SearchCriteria[0].SearchComplete = true;
+            SearchCriteria[0].FirstSearch = false;
+            SearchCriteria.RemoveAt(0);
         }
 
         private void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size)
         {
-            SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray()) + " - " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address + Size).Reverse().ToArray());
+            if (!SearchCriteria[0].HideSearch)
+            {
+                SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray()) + " - " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address + Size).Reverse().ToArray());
+            }
 
             this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, Size });
-            while (SearchCriteria.SearchComplete != true)
+            while (SearchCriteria[0].SearchComplete != true)
             {
                 Thread.Sleep(100);
             }
-            SetCurrentOperationText = "";
+            if (!SearchCriteria[0].HideSearch)
+            {
+                SetCurrentOperationText = "";
+            }
         }
         public void SendListProcessesPacket()
         {

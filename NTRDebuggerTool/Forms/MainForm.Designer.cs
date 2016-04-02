@@ -75,6 +75,7 @@
             this.SearchValue2 = new System.Windows.Forms.TextBox();
             this.LabelDash = new System.Windows.Forms.Label();
             this.ButtonConfig = new System.Windows.Forms.Button();
+            this.LabelButtonState = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -528,11 +529,20 @@
             this.ButtonConfig.UseVisualStyleBackColor = true;
             this.ButtonConfig.Click += new System.EventHandler(this.ButtonConfig_Click);
             // 
+            // LabelButtonState
+            // 
+            this.LabelButtonState.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.LabelButtonState.Location = new System.Drawing.Point(12, 543);
+            this.LabelButtonState.Name = "LabelButtonState";
+            this.LabelButtonState.Size = new System.Drawing.Size(280, 15);
+            this.LabelButtonState.TabIndex = 41;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.LabelButtonState);
             this.Controls.Add(this.ButtonConfig);
             this.Controls.Add(this.LabelEndAddress);
             this.Controls.Add(this.TextEndAddress);
@@ -631,5 +641,6 @@
         internal System.Windows.Forms.TextBox SearchValue2;
         private System.Windows.Forms.Label LabelDash;
         private System.Windows.Forms.Button ButtonConfig;
+        private System.Windows.Forms.Label LabelButtonState;
     }
 }

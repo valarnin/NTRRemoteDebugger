@@ -165,6 +165,10 @@ namespace NTRDebuggerTool.Remote
                 string ProcessName = KVStrings[1].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim();
                 string TitleID = KVStrings[2].Split(new String[] { ": " }, StringSplitOptions.None)[1].Trim();
                 XmlNode Node = null;
+                if (ProcessName.Equals("hid"))
+                {
+                    NTRConnection.HardwarePID = ProcessID;
+                }
 
                 if (NTRConnection.ReleasesDocument != null)
                 {
@@ -231,40 +235,40 @@ namespace NTRDebuggerTool.Remote
         private void ReadMemoryPacket(uint DataLength)
         {
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = DataLength;
-            if (DataLength < this.NTRConnection.SearchCriteria.SearchValue.Length)
+            if (DataLength < NTRConnection.SearchCriteria[0].SearchValue.Length)
             {
-                this.NTRConnection.SearchCriteria.SearchComplete = true;
+                NTRConnection.SearchCriteria[0].SearchComplete = true;
                 return;
             }
 
             byte[] Buffer = new byte[DataLength];
-            byte[] TemporaryBuffer = new byte[this.NTRConnection.SearchCriteria.SearchValue.Length];
+            byte[] TemporaryBuffer = new byte[NTRConnection.SearchCriteria[0].SearchValue.Length];
             ReadBasePacket(Buffer);
 
             this.NTRConnection.SetCurrentOperationText = "Scanning Read Memory";
 
             uint RealAddress;
 
-            for (uint i = 0; i <= DataLength - this.NTRConnection.SearchCriteria.SearchValue.Length; ++i)
+            for (uint i = 0; i <= DataLength - NTRConnection.SearchCriteria[0].SearchValue.Length; ++i)
             {
                 this.NTRConnection.ProgressScan = i;
-                RealAddress = (uint)(this.NTRConnection.SearchCriteria.StartAddress + i);
-                if (this.NTRConnection.SearchCriteria.FirstSearch || this.NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                RealAddress = (uint)(NTRConnection.SearchCriteria[0].StartAddress + i);
+                if (NTRConnection.SearchCriteria[0].FirstSearch || NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                 {
                     Array.Copy(Buffer, i, TemporaryBuffer, 0, TemporaryBuffer.Length);
                     if (CheckCriteria(RealAddress, TemporaryBuffer))
                     {
-                        this.NTRConnection.SearchCriteria.AddressesFound.Remove(RealAddress);
-                        this.NTRConnection.SearchCriteria.AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
+                        NTRConnection.SearchCriteria[0].AddressesFound.Remove(RealAddress);
+                        NTRConnection.SearchCriteria[0].AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
                     }
                     else
                     {
-                        this.NTRConnection.SearchCriteria.AddressesFound.Remove(RealAddress);
+                        NTRConnection.SearchCriteria[0].AddressesFound.Remove(RealAddress);
                     }
                 }
             }
 
-            this.NTRConnection.SearchCriteria.SearchComplete = true;
+            NTRConnection.SearchCriteria[0].SearchComplete = true;
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = this.NTRConnection.ProgressRead = this.NTRConnection.ProgressScan = 0;
         }
 
@@ -279,14 +283,14 @@ namespace NTRDebuggerTool.Remote
             {
                 if (true) ;
             }
-            switch (NTRConnection.SearchCriteria.SearchType)
+            switch (NTRConnection.SearchCriteria[0].SearchType)
             {
                 case SearchTypeBase.Exact:
-                    return Enumerable.SequenceEqual(this.NTRConnection.SearchCriteria.SearchValue, RemoteValue);
+                    return Enumerable.SequenceEqual(NTRConnection.SearchCriteria[0].SearchValue, RemoteValue);
                 case SearchTypeBase.Range:
                     IComparable valc = GetValueFromByteArray(RemoteValue);
-                    IComparable vall = GetValueFromByteArray(NTRConnection.SearchCriteria.SearchValue);
-                    IComparable valh = GetValueFromByteArray(NTRConnection.SearchCriteria.SearchValue2);
+                    IComparable vall = GetValueFromByteArray(NTRConnection.SearchCriteria[0].SearchValue);
+                    IComparable valh = GetValueFromByteArray(NTRConnection.SearchCriteria[0].SearchValue2);
                     if (vall.CompareTo(valh) > 0)
                     {
                         IComparable tmp = vall;
@@ -295,45 +299,45 @@ namespace NTRDebuggerTool.Remote
                     }
                     return vall.CompareTo(valc) <= 0 && valc.CompareTo(valh) <= 0;
                 case SearchTypeBase.IncreasedBy:
-                    if (!NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria.AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) == BitConverter.ToUInt32(NTRConnection.SearchCriteria.SearchValue, 0);
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) == BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].SearchValue, 0);
                 case SearchTypeBase.DecreasedBy:
-                    if (!NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(RemoteValue).CompareTo(GetValueFromByteArray(NTRConnection.SearchCriteria.AddressesFound[RealAddress])) == BitConverter.ToUInt32(NTRConnection.SearchCriteria.SearchValue, 0);
+                    return GetValueFromByteArray(RemoteValue).CompareTo(GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress])) == BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].SearchValue, 0);
                 case SearchTypeBase.Increased:
-                    if (!NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria.AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) > 0;
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) > 0;
                 case SearchTypeBase.Decreased:
-                    if (!NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria.AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) < 0;
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) < 0;
                 case SearchTypeBase.Same:
-                    if (!NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria.AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) == 0;
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) == 0;
                 case SearchTypeBase.Different:
-                    if (!NTRConnection.SearchCriteria.AddressesFound.ContainsKey(RealAddress))
+                    if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria.AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) != 0;
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) != 0;
                 case SearchTypeBase.Unknown:
                     return true;
                 default:
-                    throw new InvalidOperationException("Invalid search type " + NTRConnection.SearchCriteria.SearchType.ToString() + " passed to NTRPacketReceiverThread.CheckCriteria");
+                    throw new InvalidOperationException("Invalid search type " + NTRConnection.SearchCriteria[0].SearchType.ToString() + " passed to NTRPacketReceiverThread.CheckCriteria");
             }
 
 
@@ -341,7 +345,7 @@ namespace NTRDebuggerTool.Remote
 
         private IComparable GetValueFromByteArray(byte[] Value)
         {
-            switch (NTRConnection.SearchCriteria.DataType)
+            switch (NTRConnection.SearchCriteria[0].DataType)
             {
                 case DataTypeExact.Bytes1:
                     return Value[0];
@@ -356,7 +360,7 @@ namespace NTRDebuggerTool.Remote
                 case DataTypeExact.Double:
                     return BitConverter.ToDouble(Value, 0);
                 default:
-                    throw new InvalidOperationException("Invalid data type " + NTRConnection.SearchCriteria.DataType.ToString() + " passed to NTRPacketReceiverThread.GetValueFromByteArray");
+                    throw new InvalidOperationException("Invalid data type " + NTRConnection.SearchCriteria[0].DataType.ToString() + " passed to NTRPacketReceiverThread.GetValueFromByteArray");
             }
         }
 

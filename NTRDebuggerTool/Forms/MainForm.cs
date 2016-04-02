@@ -1,4 +1,5 @@
 ﻿using NTRDebuggerTool.Forms.FormEnums;
+using NTRDebuggerTool.Objects;
 using NTRDebuggerTool.Remote;
 using System;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace NTRDebuggerTool.Forms
         private bool ControlEnabledPort = true;
 
         private bool ControlEnabledProcesses = false;
-        private bool ControlEnabledButtonOpenProcess = false;
+        internal bool ControlEnabledButtonOpenProcess = false;
 
         private bool ControlEnabledMemoryRange = false;
         private bool ControlEnabledButtonRefreshMemoryRange = false;
@@ -31,13 +32,17 @@ namespace NTRDebuggerTool.Forms
         private bool ControlEnabledSize = false;
 
         private Thread EventDispatcherThread;
+        private Thread ButtonStateThread;
 
         internal string SetConnectText = null;
 
         internal NTRRemoteConnection NTRConnection;
 
         private MainFormThreadEventDispatcher ThreadEventDispatcher;
+        private MainFormThreadButtonState ThreadButtonState;
         internal bool SearchComplete = false;
+
+        internal SearchCriteria LastSearchCriteria;
 
         public MainForm(NTRRemoteConnection NTRConnection)
         {
@@ -48,17 +53,17 @@ namespace NTRDebuggerTool.Forms
             this.EventDispatcherThread.Name = "EventDispatcherThread";
             this.EventDispatcherThread.Start();
 
-            //Debug Code
-            /*SetConnectedControls(true);
-            SetConnectionControls(true);
-            SetProcessSelectedControls(true);*/
+            this.ThreadButtonState = new MainFormThreadButtonState(this);
+            this.ButtonStateThread = new Thread(new ThreadStart(this.ThreadButtonState.ThreadButtonState));
+            this.ButtonStateThread.Name = "ButtonStateThread";
+            this.ButtonStateThread.Start();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());
             ComboDataType.Items.AddRange(DataTypeExactTool.GetValues());
-            ValuesGridTypeColumn.Items.AddRange(ComboDataType.Items);
+            ValuesGridTypeColumn.Items.AddRange(DataTypeExactTool.GetValues());
             this.ComboSearchType.SelectedIndex = 0;
             this.ComboDataType.SelectedIndex = 2;
         }
@@ -176,21 +181,21 @@ namespace NTRDebuggerTool.Forms
                 NTRConnection.SetCurrentOperationText = "";
             }
 
-            if (NTRConnection.SearchCriteria != null)
+            if (LastSearchCriteria != null)
             {
-                LabelLastSearch.Text = "Last Search\n" + NTRConnection.SearchCriteria.AddressesFound.Count + " results found for " + GetDisplayForByteArray(NTRConnection.SearchCriteria.SearchValue);
+                LabelLastSearch.Text = "Last Search\n" + LastSearchCriteria.AddressesFound.Count + " results found for " + GetDisplayForByteArray(LastSearchCriteria.SearchValue);
 
                 if (SearchComplete)
                 {
                     ControlEnabledSearchButton = true;
-                    if (NTRConnection.SearchCriteria.AddressesFound.Count < Config.MaxValuesToDisplay)
+                    if (LastSearchCriteria.AddressesFound.Count < Config.MaxValuesToDisplay)
                     {
                         ResultsGrid.Rows.Clear();
-                        foreach (uint Address in NTRConnection.SearchCriteria.AddressesFound.Keys)
+                        foreach (uint Address in LastSearchCriteria.AddressesFound.Keys)
                         {
                             int Row = ResultsGrid.Rows.Add();
                             ResultsGrid[0, Row].Value = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
-                            ResultsGrid[1, Row].Value = GetDisplayForByteArray(NTRConnection.SearchCriteria.AddressesFound[Address]);
+                            ResultsGrid[1, Row].Value = GetDisplayForByteArray(LastSearchCriteria.AddressesFound[Address]);
                         }
                     }
                     NTRConnection.SetCurrentOperationText = "";
@@ -206,6 +211,7 @@ namespace NTRDebuggerTool.Forms
             }
 
             LabelCurrentOperation.Text = NTRConnection.SetCurrentOperationText;
+            LabelButtonState.Text = NTRConnection.SetCurrentOperationText2;
 
             UpdateLockedControls();
 
@@ -271,7 +277,7 @@ namespace NTRDebuggerTool.Forms
         {
             ComboSearchType.Items.Clear();
             ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());
-            NTRConnection.SearchCriteria = null;
+            LastSearchCriteria = null;
             ResultsGrid.Rows.Clear();
             ControlEnabledSearchType = ControlEnabledMemoryRange = ControlEnabledDataType = true;
             if (MemoryRange.SelectedIndex == MemoryRange.Items.Count - 1)
@@ -286,6 +292,7 @@ namespace NTRDebuggerTool.Forms
         {
             NTRConnection.Disconnect();
             this.EventDispatcherThread.Abort();
+            this.ButtonStateThread.Abort();
         }
 
         private void ButtonAddResults_Click(object sender, EventArgs e)
@@ -296,9 +303,9 @@ namespace NTRDebuggerTool.Forms
                 {
                     int RowIndex = ValuesGrid.Rows.Add();
                     ValuesGrid[0, RowIndex].Value = null;
+                    ValuesGrid[3, RowIndex].Value = ComboDataType.Text;
                     ValuesGrid[1, RowIndex].Value = Row.Cells[0].Value;
                     ValuesGrid[2, RowIndex].Value = SearchValue.Text;
-                    ValuesGrid[3, RowIndex].Value = ComboDataType.Text;
                 }
             }
         }
@@ -494,7 +501,7 @@ namespace NTRDebuggerTool.Forms
         private void ComboDataType_SelectedValueChanged(object sender, EventArgs e)
         {
             string CurrentSearchType = ComboSearchType.SelectedItem == null ? null : ComboSearchType.SelectedItem.ToString();
-            if (NTRConnection.SearchCriteria == null)
+            if (LastSearchCriteria == null)
             {
                 ComboSearchType.Items.Clear();
                 ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());

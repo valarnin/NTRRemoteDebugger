@@ -5,6 +5,7 @@ namespace NTRDebuggerTool.Objects
 {
     public class SearchCriteria
     {
+        public uint Duration;
         public uint ProcessID;
         public uint StartAddress, Length;
         public SearchTypeBase SearchType;
@@ -16,6 +17,7 @@ namespace NTRDebuggerTool.Objects
         public bool AllSearchesComplete = false;
 
         public bool FirstSearch = true;
+        public bool HideSearch = false;
 
         public Dictionary<uint, byte[]> AddressesFound = new Dictionary<uint, byte[]>();
     }
