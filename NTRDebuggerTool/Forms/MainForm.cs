@@ -2,6 +2,8 @@
 using NTRDebuggerTool.Objects;
 using NTRDebuggerTool.Remote;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -49,6 +51,10 @@ namespace NTRDebuggerTool.Forms
         private Regex HexRegex = new Regex("^[0-9A-F]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private Regex ParserRegex = new Regex("\\(\\*(?<Address>.+)\\)(?<Offset>(?:\\[[0-9A-F]+\\])?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        private Stopwatch LockValuesStopwatch = new Stopwatch();
+
+        private Dictionary<uint, uint> Pointers = new Dictionary<uint, uint>();
+
         public MainForm(NTRRemoteConnection NTRConnection)
         {
             InitializeComponent();
@@ -64,6 +70,7 @@ namespace NTRDebuggerTool.Forms
             this.ButtonStateThread.Start();
 
             this.IP.Text = Config.DefaultIP;
+            LockValuesStopwatch.Start();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -190,7 +197,7 @@ namespace NTRDebuggerTool.Forms
                 NTRConnection.SetCurrentOperationText = "";
             }
 
-            if (LastSearchCriteria != null)
+            if (LastSearchCriteria != null && LastSearchCriteria.SearchValue != null)
             {
                 LabelLastSearch.Text = "Last Search\n" + LastSearchCriteria.AddressesFound.Count + " results found for " + GetDisplayForByteArray(LastSearchCriteria.SearchValue);
 
@@ -226,12 +233,18 @@ namespace NTRDebuggerTool.Forms
 
             if (NTRConnection.IsConnected)
             {
-                for (int i = 0; i < ValuesGrid.Rows.Count; ++i)
+                if (LockValuesStopwatch.ElapsedMilliseconds > Config.LockValuesDelay)
                 {
-                    if (ValuesGrid[0, i].Value is string)
+                    Pointers.Clear();
+                    for (int i = 0; i < ValuesGrid.Rows.Count; ++i)
                     {
-                        SetMemory(i);
+                        if (ValuesGrid[0, i].Value is string)
+                        {
+                            SetMemory(i);
+                        }
                     }
+                    Pointers.Clear();
+                    LockValuesStopwatch.Restart();
                 }
             }
         }
@@ -291,6 +304,7 @@ namespace NTRDebuggerTool.Forms
         {
             ComboSearchType.Items.Clear();
             ComboSearchType.Items.AddRange(SearchTypeInitialTool.GetValues());
+            ComboSearchType.SelectedIndex = 0;
             LastSearchCriteria = null;
             ResultsGrid.Rows.Clear();
             ControlEnabledSearchType = ControlEnabledMemoryRange = ControlEnabledDataType = true;
@@ -340,7 +354,9 @@ namespace NTRDebuggerTool.Forms
         {
             if (e.RowIndex >= 0 && e.ColumnIndex == 2)
             {
+                Pointers.Clear();
                 SetMemory(e.RowIndex);
+                Pointers.Clear();
             }
         }
 
@@ -428,6 +444,7 @@ namespace NTRDebuggerTool.Forms
             string AddressString = Match.Groups["Address"].Value;
             string OffsetString = Match.Groups["Offset"].Value;
 
+
             uint Address;
 
             Match RecurseMatch = ParserRegex.Match(AddressString);
@@ -438,9 +455,18 @@ namespace NTRDebuggerTool.Forms
             }
             else
             {
-                byte[] Data = GetMemoryAtAddress(Processes.Text.Split('|')[0], AddressString, DataTypeExact.Bytes4);
+                uint Pointer = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(AddressString).Reverse().ToArray(), 0);
+                if (!Pointers.ContainsKey(Pointer))
+                {
+                    byte[] Data = GetMemoryAtAddress(Processes.Text.Split('|')[0], AddressString, DataTypeExact.Bytes4);
 
-                Address = BitConverter.ToUInt32(Data, 0);
+                    Address = BitConverter.ToUInt32(Data, 0);
+                    Pointers[Pointer] = Address;
+                }
+                else
+                {
+                    Address = Pointers[Pointer];
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(OffsetString))

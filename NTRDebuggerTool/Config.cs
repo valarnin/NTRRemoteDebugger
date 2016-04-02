@@ -118,6 +118,28 @@ namespace NTRDebuggerTool
             }
         }
         #endregion
+
+        #region LockValuesDelay
+        private const int DefaultLockValuesDelay = 5;
+        private static Nullable<int> lockValuesDelay = null;
+        public static int LockValuesDelay
+        {
+            get
+            {
+                if (lockValuesDelay == null)
+                {
+                    string TempVal = GetValue("LockValuesDelay");
+                    lockValuesDelay = string.IsNullOrWhiteSpace(TempVal) ? DefaultLockValuesDelay : int.Parse(TempVal);
+                }
+                return lockValuesDelay.Value;
+            }
+            set
+            {
+                lockValuesDelay = value;
+                SetValue("LockValuesDelay", value.ToString());
+            }
+        }
+        #endregion
         #endregion
 
         #region Add to default set here
@@ -150,6 +172,10 @@ namespace NTRDebuggerTool
                 {
                     All.Add("ConnectTries", ConnectTries.ToString());
                 }
+                if (!All.ContainsKey("LockValuesDelay"))
+                {
+                    All.Add("LockValuesDelay", LockValuesDelay.ToString());
+                }
                 return All;
             }
             set
@@ -173,6 +199,7 @@ namespace NTRDebuggerTool
             DefaultIP = DefaultDefaultIP;
             ConnectTimeout = DefaultConnectTimeout;
             ConnectTries = DefaultConnectTries;
+            LockValuesDelay = DefaultLockValuesDelay;
         }
 
         #endregion
