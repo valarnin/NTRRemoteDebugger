@@ -28,6 +28,26 @@ namespace NTRDebuggerTool
             }
         }
 
+        private const string DefaultDefaultIP = ""; //Stupid name but oh well
+        private static string defaultIP = null;
+        public static string DefaultIP
+        {
+            get
+            {
+                if (defaultIP == null)
+                {
+                    string TempVal = GetValue("DefaultIP");
+                    defaultIP = string.IsNullOrWhiteSpace(TempVal) ? DefaultDefaultIP : TempVal;
+                }
+                return defaultIP;
+            }
+            set
+            {
+                defaultIP = value;
+                SetValue("DefaultIP", value);
+            }
+        }
+
         public static Dictionary<string, string> All
         {
             get
@@ -36,6 +56,14 @@ namespace NTRDebuggerTool
                 foreach (XmlNode Node in RootXmlElement.ChildNodes)
                 {
                     All.Add(Node.Name, Node.InnerText);
+                }
+                if (!All.ContainsKey("MaxValuesToDisplay"))
+                {
+                    All.Add("MaxValuesToDisplay", MaxValuesToDisplay.ToString());
+                }
+                if (!All.ContainsKey("DefaultIP"))
+                {
+                    All.Add("DefaultIP", DefaultIP.ToString());
                 }
                 return All;
             }
@@ -56,6 +84,7 @@ namespace NTRDebuggerTool
             ConfigFile.LoadXml("<root></root>");
             ConfigFile.Save(ConfigFilePath);
             MaxValuesToDisplay = DefaultMaxValuesToDisplay;
+            DefaultIP = DefaultDefaultIP;
         }
 
         #region XML Stuff

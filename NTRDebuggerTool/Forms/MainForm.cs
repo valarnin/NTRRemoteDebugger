@@ -58,6 +58,8 @@ namespace NTRDebuggerTool.Forms
             this.ButtonStateThread = new Thread(new ThreadStart(this.ThreadButtonState.ThreadButtonState));
             this.ButtonStateThread.Name = "ButtonStateThread";
             this.ButtonStateThread.Start();
+
+            this.IP.Text = Config.DefaultIP;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -634,7 +636,8 @@ namespace NTRDebuggerTool.Forms
         private void ButtonConfig_Click(object sender, EventArgs e)
         {
             ConfigDialog Dialog = new ConfigDialog();
-            Dialog.Show(this);
+            Dialog.ShowDialog(this);
+            Dialog.Dispose();
         }
 
         private void Memory_TextChanged(object sender, EventArgs e)
