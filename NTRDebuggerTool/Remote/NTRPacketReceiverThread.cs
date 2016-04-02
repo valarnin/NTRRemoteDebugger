@@ -235,7 +235,7 @@ namespace NTRDebuggerTool.Remote
         private void ReadMemoryPacket(uint DataLength)
         {
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = DataLength;
-            if (DataLength < NTRConnection.SearchCriteria[0].SearchValue.Length)
+            if (DataLength < NTRConnection.SearchCriteria[0].Length)
             {
                 NTRConnection.SearchCriteria[0].SearchComplete = true;
                 return;
@@ -249,7 +249,7 @@ namespace NTRDebuggerTool.Remote
 
             uint RealAddress;
 
-            for (uint i = 0; i <= DataLength - NTRConnection.SearchCriteria[0].SearchValue.Length; ++i)
+            for (uint i = 0; i <= DataLength - NTRConnection.SearchCriteria[0].Length; ++i)
             {
                 this.NTRConnection.ProgressScan = i;
                 RealAddress = (uint)(NTRConnection.SearchCriteria[0].StartAddress + i);
