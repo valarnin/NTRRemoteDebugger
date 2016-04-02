@@ -90,6 +90,7 @@ namespace NTRDebuggerTool
                         Criteria.Length = Size;
                         Criteria.SearchType = SearchTypeBase.Unknown;
                         Criteria.SearchValue = new byte[] { 0 };
+                        Criteria.Size = 1;
                         Conn.SearchCriteria.Add(Criteria);
                         byte[] Data = new byte[Size];
                         Console.WriteLine("Dumping PID " + Proc + ", MR " + Start + "+" + Size + "...");

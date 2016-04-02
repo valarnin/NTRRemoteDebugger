@@ -8,6 +8,7 @@ namespace NTRDebuggerTool.Objects
         public uint Duration;
         public uint ProcessID;
         public uint StartAddress, Length;
+        public uint Size;
         public SearchTypeBase SearchType;
         public DataTypeExact DataType;
         public byte[] SearchValue;

@@ -446,7 +446,7 @@ namespace NTRDebuggerTool.Forms
             if (!string.IsNullOrWhiteSpace(OffsetString))
             {
                 OffsetString = OffsetString.Replace("[", "").Replace("]", "");
-                Address += BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(OffsetString), 0);
+                Address += BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(OffsetString.PadLeft(8, '0')).Reverse().ToArray(), 0);
             }
 
             return Address;
@@ -458,12 +458,12 @@ namespace NTRDebuggerTool.Forms
             Criteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0);
             Criteria.DataType = DataType;
             Criteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0);
-            Criteria.Length = GetSearchMemorySize(DataType);
+            Criteria.Length = Criteria.Size = GetSearchMemorySize(DataType);
             Criteria.SearchType = SearchTypeBase.Unknown;
             Criteria.SearchValue = new byte[] { 0 };
             NTRConnection.SearchCriteria.Add(Criteria);
             NTRConnection.SendReadMemoryPacket(Criteria);
-            return new byte[]{};
+            return Criteria.AddressesFound.Values.First();
         }
 
         private void ValuesGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -522,7 +522,7 @@ namespace NTRDebuggerTool.Forms
             MemorySize.Text = MemorySize.Text.PadLeft(8, '0');
             uint StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(MemoryStart.Text).Reverse().ToArray(), 0);
             uint EndAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(TextEndAddress.Text).Reverse().ToArray(), 0);
-            if (!IsValidMemoryAddress(StartAddress) || !IsValidMemoryAddress(EndAddress))
+            if (!MemoryRange.Text.Equals("All") && (!IsValidMemoryAddress(StartAddress) || !IsValidMemoryAddress(EndAddress)))
             {
                 NTRConnection.SetCurrentOperationText = "Invalid start address or size!";
                 return;

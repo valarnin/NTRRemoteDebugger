@@ -116,7 +116,7 @@ namespace NTRDebuggerTool.Remote
                     Client = new TcpClient();
                     Client.NoDelay = true;
                     IAsyncResult res = Client.BeginConnect(IP, Port, null, null);
-                    if (!res.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(3)))
+                    if (!res.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(Config.ConnectTimeout)))
                     {
                         Client.Close();
                         Client = null;
@@ -211,7 +211,7 @@ namespace NTRDebuggerTool.Remote
                 Thread.Sleep(10);
             }
             SearchTimerStopwatch.Start();
-            SendReadMemoryPacketPre(SearchCriteria[0].ProcessID, SearchCriteria[0].StartAddress, SearchCriteria[0].Length);
+            SendReadMemoryPacketPre();
             SearchTimerStopwatch.Stop();
             NewSearchCriteria.Duration = (uint)SearchTimerStopwatch.ElapsedMilliseconds;
             SearchTimerStopwatch.Reset();
@@ -221,46 +221,51 @@ namespace NTRDebuggerTool.Remote
             }
         }
 
-        private void SendReadMemoryPacketPre(uint ProcessID, uint AddressSpace, uint Size)
+        private void SendReadMemoryPacketPre()
         {
             SearchCriteria[0].AllSearchesComplete = false;
-            if (SearchCriteria[0].AddressesFound.Count > 0 && SearchCriteria[0].AddressesFound.Count < 200)
+            if (SearchCriteria[0].AddressesFound.Count > 0 && (SearchCriteria[0].AddressesFound.Count < 200 || SearchCriteria[0].StartAddress == uint.MaxValue))
             {
+                uint TempAddress = SearchCriteria[0].StartAddress;
                 //Clone the list to an array to prevent concurrent modification
                 foreach (uint Address in new List<uint>(SearchCriteria[0].AddressesFound.Keys))
                 {
                     SearchCriteria[0].SearchComplete = false;
                     SearchCriteria[0].StartAddress = Address;
-                    SendReadMemoryPacket(ProcessID, Address, (uint)SearchCriteria[0].SearchValue.Length);
+                    SendReadMemoryPacket();
                 }
-                SearchCriteria[0].StartAddress = AddressSpace;
+                SearchCriteria[0].StartAddress = TempAddress;
             }
-            else if (AddressSpace == uint.MaxValue)
+            else if (SearchCriteria[0].StartAddress == uint.MaxValue)
             {
                 foreach (uint ActualAddressSpace in AddressSpaces.Keys)
                 {
+                    SearchCriteria[0].StartAddress = ActualAddressSpace;
+                    SearchCriteria[0].Length = AddressSpaces[ActualAddressSpace];
                     SearchCriteria[0].SearchComplete = false;
-                    SendReadMemoryPacket(ProcessID, ActualAddressSpace, AddressSpaces[ActualAddressSpace]);
+                    SendReadMemoryPacket();
                 }
+                SearchCriteria[0].StartAddress = uint.MaxValue;
+                SearchCriteria[0].Length = uint.MaxValue;
             }
             else
             {
                 SearchCriteria[0].SearchComplete = false;
-                SendReadMemoryPacket(ProcessID, AddressSpace, Size);
+                SendReadMemoryPacket();
             }
             SearchCriteria[0].AllSearchesComplete = SearchCriteria[0].SearchComplete = true;
             SearchCriteria[0].FirstSearch = false;
             SearchCriteria.RemoveAt(0);
         }
 
-        private void SendReadMemoryPacket(uint ProcessID, uint Address, uint Size)
+        private void SendReadMemoryPacket()
         {
             if (!SearchCriteria[0].HideSearch)
             {
-                SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray()) + " - " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address + Size).Reverse().ToArray());
+                SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(SearchCriteria[0].StartAddress).Reverse().ToArray()) + " - " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(SearchCriteria[0].StartAddress + SearchCriteria[0].Length).Reverse().ToArray());
             }
 
-            this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(ProcessID).Reverse().ToArray(), 0), Address, Size });
+            this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(SearchCriteria[0].ProcessID).Reverse().ToArray(), 0), SearchCriteria[0].StartAddress, SearchCriteria[0].Length });
             while (SearchCriteria[0].SearchComplete != true)
             {
                 Thread.Sleep(100);

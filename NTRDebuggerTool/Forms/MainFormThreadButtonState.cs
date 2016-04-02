@@ -38,6 +38,7 @@ namespace NTRDebuggerTool.Forms
                     Criteria.Length = BUTTON_STATES_SIZE;
                     Criteria.SearchType = SearchTypeBase.Unknown;
                     Criteria.SearchValue = new byte[] { 0 };
+                    Criteria.Size = 1;
                     Criteria.HideSearch = true;
                     Form.NTRConnection.SearchCriteria.Add(Criteria);
 

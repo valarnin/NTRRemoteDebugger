@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Xml;
 
 namespace NTRDebuggerTool.Remote
@@ -10,6 +11,8 @@ namespace NTRDebuggerTool.Remote
     class NTRPacketReceiverThread
     {
         private NTRRemoteConnection NTRConnection;
+
+        private uint DataRead = 0;
 
         internal NTRPacketReceiverThread(NTRRemoteConnection NTRConnection)
         {
@@ -115,7 +118,9 @@ namespace NTRDebuggerTool.Remote
                     return 0;
                 }
                 Position += Read;
+                DataRead = (uint)Position;
             }
+            DataRead = (uint)Position;
             return Position;
         }
 
@@ -235,38 +240,55 @@ namespace NTRDebuggerTool.Remote
         private void ReadMemoryPacket(uint DataLength)
         {
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = DataLength;
-            if (DataLength < NTRConnection.SearchCriteria[0].Length)
+            if (DataLength < NTRConnection.SearchCriteria[0].Size)
             {
                 NTRConnection.SearchCriteria[0].SearchComplete = true;
                 return;
             }
 
             byte[] Buffer = new byte[DataLength];
-            byte[] TemporaryBuffer = new byte[NTRConnection.SearchCriteria[0].Length];
-            ReadBasePacket(Buffer);
+            byte[] TemporaryBuffer = new byte[NTRConnection.SearchCriteria[0].Size];
 
-            this.NTRConnection.SetCurrentOperationText = "Scanning Read Memory";
+            DataRead = 0;
 
-            uint RealAddress;
-
-            for (uint i = 0; i <= DataLength - NTRConnection.SearchCriteria[0].Length; ++i)
+            Thread MemoryScanThread = new Thread(delegate()
             {
-                this.NTRConnection.ProgressScan = i;
-                RealAddress = (uint)(NTRConnection.SearchCriteria[0].StartAddress + i);
-                if (NTRConnection.SearchCriteria[0].FirstSearch || NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
+                uint RealAddress;
+                for (uint i = 0; i <= DataLength - NTRConnection.SearchCriteria[0].Size; ++i)
                 {
-                    Array.Copy(Buffer, i, TemporaryBuffer, 0, TemporaryBuffer.Length);
-                    if (CheckCriteria(RealAddress, TemporaryBuffer))
+                    if (DataRead < i + NTRConnection.SearchCriteria[0].Size)
                     {
-                        NTRConnection.SearchCriteria[0].AddressesFound.Remove(RealAddress);
-                        NTRConnection.SearchCriteria[0].AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
+                        --i;
+                        Thread.Sleep(50);
+                        continue;
                     }
-                    else
+                    this.NTRConnection.ProgressScan = i;
+                    RealAddress = (uint)(NTRConnection.SearchCriteria[0].StartAddress + i);
+                    if (NTRConnection.SearchCriteria[0].FirstSearch || NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
-                        NTRConnection.SearchCriteria[0].AddressesFound.Remove(RealAddress);
+                        Array.Copy(Buffer, i, TemporaryBuffer, 0, TemporaryBuffer.Length);
+                        if (CheckCriteria(RealAddress, TemporaryBuffer))
+                        {
+                            NTRConnection.SearchCriteria[0].AddressesFound.Remove(RealAddress);
+                            NTRConnection.SearchCriteria[0].AddressesFound.Add(RealAddress, (byte[])TemporaryBuffer.Clone());
+                        }
+                        else
+                        {
+                            NTRConnection.SearchCriteria[0].AddressesFound.Remove(RealAddress);
+                        }
                     }
                 }
-            }
+            });
+
+            MemoryScanThread.Start();
+
+            ReadBasePacket(Buffer);
+
+            MemoryScanThread.Join();
+
+            DataRead = 0;
+
+            this.NTRConnection.SetCurrentOperationText = "Scanning Read Memory";
 
             NTRConnection.SearchCriteria[0].SearchComplete = true;
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = this.NTRConnection.ProgressRead = this.NTRConnection.ProgressScan = 0;

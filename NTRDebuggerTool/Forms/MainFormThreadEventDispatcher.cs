@@ -69,7 +69,7 @@ namespace NTRDebuggerTool.Forms
 
                 bool Connected = false;
 
-                for (int i = 0; i < 5 && !Connected; ++i)
+                for (int i = 0; i < Config.ConnectTries && !Connected; ++i)
                 {
                     Connected = Form.NTRConnection.Connect();
                 }
@@ -113,11 +113,13 @@ namespace NTRDebuggerTool.Forms
                 if (string.IsNullOrWhiteSpace(Form.SearchValue.Text))
                 {
                     Form.NTRConnection.SetCurrentOperationText = "Invalid search criteria!";
+                    Form.SearchComplete = true;
                     return;
                 }
                 if (CurrentSelectedSearchType == SearchTypeBase.Range && string.IsNullOrWhiteSpace(Form.SearchValue2.Text))
                 {
                     Form.NTRConnection.SetCurrentOperationText = "Invalid range criteria!";
+                    Form.SearchComplete = true;
                     return;
                 }
             }
@@ -149,6 +151,7 @@ namespace NTRDebuggerTool.Forms
             }
 
             Form.LastSearchCriteria.SearchValue = GetValueForDataType(CurrentSelectedDataType, Value1);
+            Form.LastSearchCriteria.Size = (uint)Form.LastSearchCriteria.SearchValue.Length;
             if (CurrentSelectedSearchType == SearchTypeBase.Range)
             {
                 Form.LastSearchCriteria.SearchValue2 = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue2.Text);

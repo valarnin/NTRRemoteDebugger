@@ -74,6 +74,50 @@ namespace NTRDebuggerTool
             }
         }
         #endregion
+
+        #region ConnectTimeout
+        private const int DefaultConnectTimeout = 3000;
+        private static Nullable<int> connectTimeout = null;
+        public static int ConnectTimeout
+        {
+            get
+            {
+                if (connectTimeout == null)
+                {
+                    string TempVal = GetValue("ConnectTimeout");
+                    connectTimeout = string.IsNullOrWhiteSpace(TempVal) ? DefaultConnectTimeout : int.Parse(TempVal);
+                }
+                return connectTimeout.Value;
+            }
+            set
+            {
+                connectTimeout = value;
+                SetValue("ConnectTimeout", value.ToString());
+            }
+        }
+        #endregion
+
+        #region ConnectTries
+        private const int DefaultConnectTries = 5;
+        private static Nullable<int> connectTries = null;
+        public static int ConnectTries
+        {
+            get
+            {
+                if (connectTries == null)
+                {
+                    string TempVal = GetValue("ConnectTries");
+                    connectTries = string.IsNullOrWhiteSpace(TempVal) ? DefaultConnectTries : int.Parse(TempVal);
+                }
+                return connectTries.Value;
+            }
+            set
+            {
+                connectTries = value;
+                SetValue("ConnectTries", value.ToString());
+            }
+        }
+        #endregion
         #endregion
 
         #region Add to default set here
@@ -98,6 +142,14 @@ namespace NTRDebuggerTool
                 {
                     All.Add("DefaultIP", DefaultIP.ToString());
                 }
+                if (!All.ContainsKey("ConnectTimeout"))
+                {
+                    All.Add("ConnectTimeout", ConnectTimeout.ToString());
+                }
+                if (!All.ContainsKey("ConnectTries"))
+                {
+                    All.Add("ConnectTries", ConnectTries.ToString());
+                }
                 return All;
             }
             set
@@ -119,6 +171,8 @@ namespace NTRDebuggerTool
             MaxValuesToDisplay = DefaultMaxValuesToDisplay;
             ButtonStateUpdateInterval = DefaultButtonStateUpdateInterval;
             DefaultIP = DefaultDefaultIP;
+            ConnectTimeout = DefaultConnectTimeout;
+            ConnectTries = DefaultConnectTries;
         }
 
         #endregion
