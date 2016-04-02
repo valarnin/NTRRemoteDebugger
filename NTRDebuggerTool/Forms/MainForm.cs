@@ -26,6 +26,7 @@ namespace NTRDebuggerTool.Forms
         private bool ControlEnabledDataType = false;
         private bool ControlEnabledSearchType = false;
         private bool ControlEnabledSearchValue = false;
+        private bool ControlEnabledSearchValue2 = false;
         private bool ControlEnabledValuesGrid = false;
 
         private bool ControlEnabledStart = false;
@@ -84,6 +85,7 @@ namespace NTRDebuggerTool.Forms
             this.ComboSearchType.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchType;
             this.ComboDataType.Enabled = !NTRConnection.LockControls && this.ControlEnabledDataType;
             this.SearchValue.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchValue;
+            this.SearchValue2.Enabled = !NTRConnection.LockControls && this.ControlEnabledSearchValue2;
             this.ValuesGrid.Enabled = !NTRConnection.LockControls && this.ControlEnabledValuesGrid;
             this.MemoryStart.Enabled = !NTRConnection.LockControls && this.ControlEnabledStart;
             this.MemorySize.Enabled = !NTRConnection.LockControls && this.ControlEnabledSize;
@@ -106,6 +108,7 @@ namespace NTRDebuggerTool.Forms
             ControlEnabledSearchType = Enabled;
             ControlEnabledDataType = Enabled;
             ControlEnabledSearchValue = Enabled;
+            ControlEnabledSearchValue2 = Enabled;
             ControlEnabledValuesGrid = Enabled;
         }
 
