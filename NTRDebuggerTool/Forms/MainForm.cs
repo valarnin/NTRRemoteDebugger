@@ -640,10 +640,10 @@ namespace NTRDebuggerTool.Forms
             {
                 string Start = MemoryStart.Text.PadLeft(8, '0');
                 string Size = MemorySize.Text.PadLeft(8, '0');
-                uint StartInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Start), 0);
-                uint SizeInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Size), 0);
+                uint StartInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Start).Reverse().ToArray(), 0);
+                uint SizeInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Size).Reverse().ToArray(), 0);
                 uint EndInt = StartInt + SizeInt;
-                string End = Utilities.GetStringFromByteArray(BitConverter.GetBytes(EndInt));
+                string End = Utilities.GetStringFromByteArray(BitConverter.GetBytes(EndInt).Reverse().ToArray());
                 TextEndAddress.Text = End;
             }
             else

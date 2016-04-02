@@ -26,7 +26,7 @@ namespace NTRDebuggerTool.Forms
 
         internal void ThreadButtonState()
         {
-            int LastSearchTime = 2500;
+            int LastSearchTime = 250;
             while (true)
             {
                 if (Form.NTRConnection.HardwarePID != null)
