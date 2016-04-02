@@ -242,7 +242,7 @@ namespace NTRDebuggerTool.Remote
             }
 
             byte[] Buffer = new byte[DataLength];
-            byte[] TemporaryBuffer = new byte[NTRConnection.SearchCriteria[0].SearchValue.Length];
+            byte[] TemporaryBuffer = new byte[NTRConnection.SearchCriteria[0].Length];
             ReadBasePacket(Buffer);
 
             this.NTRConnection.SetCurrentOperationText = "Scanning Read Memory";

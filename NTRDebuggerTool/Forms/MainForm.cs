@@ -438,8 +438,9 @@ namespace NTRDebuggerTool.Forms
             }
             else
             {
+                byte[] Data = GetMemoryAtAddress(Processes.Text.Split('|')[0], AddressString, DataTypeExact.Bytes4);
 
-                Address = BitConverter.ToUInt32(GetMemoryAtAddress(Processes.SelectedValue.ToString().Split('|')[0], AddressString, DataTypeExact.Bytes4), 0);
+                Address = BitConverter.ToUInt32(Data, 0);
             }
 
             if (!string.IsNullOrWhiteSpace(OffsetString))
@@ -462,7 +463,7 @@ namespace NTRDebuggerTool.Forms
             Criteria.SearchValue = new byte[] { 0 };
             NTRConnection.SearchCriteria.Add(Criteria);
             NTRConnection.SendReadMemoryPacket(Criteria);
-            return Criteria.AddressesFound.Values.First();
+            return new byte[]{};
         }
 
         private void ValuesGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
