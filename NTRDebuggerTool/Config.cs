@@ -8,6 +8,8 @@ namespace NTRDebuggerTool
 {
     public class Config
     {
+        #region Config Settings
+        #region MaxValuesToDisplay
         private const uint DefaultMaxValuesToDisplay = 1000;
         private static Nullable<uint> maxValuesToDisplay = null;
         public static uint MaxValuesToDisplay
@@ -27,7 +29,31 @@ namespace NTRDebuggerTool
                 SetValue("MaxValuesToDisplay", value.ToString());
             }
         }
+        #endregion
 
+        #region ButtonStateUpdateInterval
+        private const int DefaultButtonStateUpdateInterval = 250;
+        private static Nullable<int> buttonStateUpdateInterval = null;
+        public static int ButtonStateUpdateInterval
+        {
+            get
+            {
+                if (buttonStateUpdateInterval == null)
+                {
+                    string TempVal = GetValue("ButtonStateUpdateInterval");
+                    buttonStateUpdateInterval = string.IsNullOrWhiteSpace(TempVal) ? DefaultButtonStateUpdateInterval : int.Parse(TempVal);
+                }
+                return buttonStateUpdateInterval.Value;
+            }
+            set
+            {
+                buttonStateUpdateInterval = value;
+                SetValue("ButtonStateUpdateInterval", value.ToString());
+            }
+        }
+        #endregion
+
+        #region DefaultIP
         private const string DefaultDefaultIP = ""; //Stupid name but oh well
         private static string defaultIP = null;
         public static string DefaultIP
@@ -47,7 +73,10 @@ namespace NTRDebuggerTool
                 SetValue("DefaultIP", value);
             }
         }
+        #endregion
+        #endregion
 
+        #region Add to default set here
         public static Dictionary<string, string> All
         {
             get
@@ -60,6 +89,10 @@ namespace NTRDebuggerTool
                 if (!All.ContainsKey("MaxValuesToDisplay"))
                 {
                     All.Add("MaxValuesToDisplay", MaxValuesToDisplay.ToString());
+                }
+                if (!All.ContainsKey("ButtonStateUpdateInterval"))
+                {
+                    All.Add("ButtonStateUpdateInterval", ButtonStateUpdateInterval.ToString());
                 }
                 if (!All.ContainsKey("DefaultIP"))
                 {
@@ -84,8 +117,11 @@ namespace NTRDebuggerTool
             ConfigFile.LoadXml("<root></root>");
             ConfigFile.Save(ConfigFilePath);
             MaxValuesToDisplay = DefaultMaxValuesToDisplay;
+            ButtonStateUpdateInterval = DefaultButtonStateUpdateInterval;
             DefaultIP = DefaultDefaultIP;
         }
+
+        #endregion
 
         #region XML Stuff
 
@@ -115,7 +151,7 @@ namespace NTRDebuggerTool
         {
             get
             {
-                if (ConfigFile == null)
+                if (ConfigFile == null || ConfigFile.FirstChild == null)
                 {
                     InitializeConfigFile();
                 }
@@ -145,6 +181,11 @@ namespace NTRDebuggerTool
             ConfigFile.NodeChanged += new XmlNodeChangedEventHandler(NodeChangedHandler);
             ConfigFile.NodeInserted += new XmlNodeChangedEventHandler(NodeChangedHandler);
             ConfigFile.NodeRemoved += new XmlNodeChangedEventHandler(NodeChangedHandler);
+        }
+
+        static Config()
+        {
+            if (All != null) ;
         }
 
         #endregion
