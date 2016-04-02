@@ -3,6 +3,7 @@ using NTRDebuggerTool.Objects;
 using NTRDebuggerTool.Remote;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -44,6 +45,9 @@ namespace NTRDebuggerTool.Forms
         internal bool SearchComplete = false;
 
         internal SearchCriteria LastSearchCriteria;
+
+        private Regex HexRegex = new Regex("^[0-9A-F]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Regex ParserRegex = new Regex("\\(\\*(?<Address>.+)\\)(?<Offset>(?:\\[[0-9A-F]+\\])?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public MainForm(NTRRemoteConnection NTRConnection)
         {
@@ -257,7 +261,12 @@ namespace NTRDebuggerTool.Forms
 
         internal uint GetSearchMemorySize()
         {
-            switch (ThreadEventDispatcher.CurrentSelectedDataType)
+            return GetSearchMemorySize(ThreadEventDispatcher.CurrentSelectedDataType);
+        }
+
+        private uint GetSearchMemorySize(DataTypeExact DataType)
+        {
+            switch (DataType)
             {
                 case DataTypeExact.Bytes1: //1 Byte
                     return 1;
@@ -337,7 +346,26 @@ namespace NTRDebuggerTool.Forms
 
         private void SetMemory(int RowIndex)
         {
-            uint Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0);
+            string TextAddress = (string)ValuesGrid[1, RowIndex].Value;
+
+            uint Address;
+
+            if (HexRegex.IsMatch(TextAddress))
+            {
+                Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0); ;
+            }
+            else
+            {
+                Match TopMatch = ParserRegex.Match(TextAddress);
+
+                if (!TopMatch.Success)
+                {
+                    return;
+                }
+
+                Address = ResolvePointer(TopMatch);
+            }
+
             if (IsValidMemoryAddress(Address))
             {
                 uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0);
@@ -393,6 +421,48 @@ namespace NTRDebuggerTool.Forms
                         break;
                 }
             }
+        }
+
+        private uint ResolvePointer(Match Match)
+        {
+            string AddressString = Match.Groups["Address"].Value;
+            string OffsetString = Match.Groups["Offset"].Value;
+
+            uint Address;
+
+            Match RecurseMatch = ParserRegex.Match(AddressString);
+
+            if (RecurseMatch.Success)
+            {
+                Address = ResolvePointer(RecurseMatch);
+            }
+            else
+            {
+
+                Address = BitConverter.ToUInt32(GetMemoryAtAddress(Processes.SelectedValue.ToString().Split('|')[0], AddressString, DataTypeExact.Bytes4), 0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(OffsetString))
+            {
+                OffsetString = OffsetString.Replace("[", "").Replace("]", "");
+                Address += BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(OffsetString), 0);
+            }
+
+            return Address;
+        }
+
+        private byte[] GetMemoryAtAddress(string ProcessID, string Address, DataTypeExact DataType)
+        {
+            SearchCriteria Criteria = new SearchCriteria();
+            Criteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0);
+            Criteria.DataType = DataType;
+            Criteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0);
+            Criteria.Length = GetSearchMemorySize(DataType);
+            Criteria.SearchType = SearchTypeBase.Unknown;
+            Criteria.SearchValue = new byte[] { 0 };
+            NTRConnection.SearchCriteria.Add(Criteria);
+            NTRConnection.SendReadMemoryPacket(Criteria);
+            return Criteria.AddressesFound.Values.First();
         }
 
         private void ValuesGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
