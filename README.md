@@ -5,14 +5,14 @@ Tool to interface with NTR CFW's remote debugging.
 
 * Nice GUI for searching for memory addresses and modifying them.
 * No messing about with files or other external resources.
-* Allows searching for byte, short, int, long, float, double, and list of bytes.
+* Allows searching for byte, short, int, long, float, double, list of bytes, and text strings.
 * Subsequent searches will narrow search results by only requesting the memory addresses needed, speeding up things significantly.
-* Ability to "lock" memory addresses to a given value. This means that they are set automatically every 100ms or so.
+* Ability to "lock" memory addresses to a given value. This means that they are set automatically based on a configured value.
 * Can convert AR3DS codes to work with the tool.
 
 # Untested
 
-* Search for value types other than 1/2/4 byte. Who knows, 3DS could represent floats different or something.
+* Search for float, double, and raw bytes.
 * It should work with Mono and therefore work on Linux/Mac. My only Linux VM is command-line only and I'm not going to convert a gentoo hardened VM to be desktop capable.
  
 # Notes
