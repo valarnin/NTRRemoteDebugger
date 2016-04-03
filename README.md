@@ -9,11 +9,11 @@ Tool to interface with NTR CFW's remote debugging.
 * Subsequent searches will narrow search results by only requesting the memory addresses needed, speeding up things significantly.
 * Ability to "lock" memory addresses to a given value. This means that they are set automatically based on a configured value.
 * Can convert AR3DS codes to work with the tool.
+* Works on mono and via wine. Thanks to u/Melon__Bread for verifying mono support (and MonoDevelop compile support) and u/MattKimura for verifying wine support.
 
 # Untested
 
 * Search for float, double, and raw bytes.
-* It should work with Mono and therefore work on Linux/Mac. My only Linux VM is command-line only and I'm not going to convert a gentoo hardened VM to be desktop capable.
  
 # Notes
 
