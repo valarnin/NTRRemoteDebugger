@@ -251,7 +251,12 @@ namespace NTRDebuggerTool.Forms
 
         public string GetDisplayForByteArray(byte[] p)
         {
-            switch (ThreadEventDispatcher.CurrentSelectedDataType)
+            return GetDisplayForByteArray(p, ThreadEventDispatcher.CurrentSelectedDataType);
+        }
+
+        public string GetDisplayForByteArray(byte[] p, DataTypeExact DataType)
+        {
+            switch (DataType)
             {
                 case DataTypeExact.Bytes1: //1 Byte
                     return ((uint)p[0]).ToString();
@@ -321,6 +326,7 @@ namespace NTRDebuggerTool.Forms
             NTRConnection.Disconnect();
             this.EventDispatcherThread.Abort();
             this.ButtonStateThread.Abort();
+            Application.Exit();
         }
 
         private void ButtonAddResults_Click(object sender, EventArgs e)
@@ -384,6 +390,7 @@ namespace NTRDebuggerTool.Forms
 
             if (IsValidMemoryAddress(Address))
             {
+                ValuesGrid[1, RowIndex].ToolTipText = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
                 uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0);
                 switch (DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value))
                 {
@@ -463,13 +470,17 @@ namespace NTRDebuggerTool.Forms
                     Address = BitConverter.ToUInt32(Data, 0);
                     Pointers[Pointer] = Address;
                 }
+                else if (!IsValidMemoryAddress(Pointer))
+                {
+                    return 0;
+                }
                 else
                 {
                     Address = Pointers[Pointer];
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(OffsetString))
+            if (Address != 0 && !string.IsNullOrWhiteSpace(OffsetString))
             {
                 OffsetString = OffsetString.Replace("[", "").Replace("]", "");
                 Address += BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(OffsetString.PadLeft(8, '0')).Reverse().ToArray(), 0);
@@ -480,10 +491,25 @@ namespace NTRDebuggerTool.Forms
 
         private byte[] GetMemoryAtAddress(string ProcessID, string Address, DataTypeExact DataType)
         {
+            return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0), DataType);
+        }
+
+        private byte[] GetMemoryAtAddress(uint ProcessID, string Address, DataTypeExact DataType)
+        {
+            return GetMemoryAtAddress(ProcessID, BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0), DataType);
+        }
+
+        private byte[] GetMemoryAtAddress(string ProcessID, uint Address, DataTypeExact DataType)
+        {
+            return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), Address, DataType);
+        }
+
+        private byte[] GetMemoryAtAddress(uint ProcessID, uint Address, DataTypeExact DataType)
+        {
             SearchCriteria Criteria = new SearchCriteria();
-            Criteria.ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0);
+            Criteria.ProcessID = ProcessID;
             Criteria.DataType = DataType;
-            Criteria.StartAddress = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0);
+            Criteria.StartAddress = Address;
             Criteria.Length = Criteria.Size = GetSearchMemorySize(DataType);
             Criteria.SearchType = SearchTypeBase.Unknown;
             Criteria.SearchValue = new byte[] { 0 };
@@ -651,10 +677,6 @@ namespace NTRDebuggerTool.Forms
             switch (e.ClickedItem.Name)
             {
                 case "ValuesGridDeleteItem":
-                    foreach (DataGridViewRow Row in ValuesGrid.SelectedRows)
-                    {
-                        ValuesGrid.Rows.Remove(Row);
-                    }
                     foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
                     {
                         ValuesGrid.Rows.Remove(Cell.OwningRow);
@@ -664,13 +686,45 @@ namespace NTRDebuggerTool.Forms
                     ValuesGrid.Rows.Add();
                     break;
                 case "ValuesGridConvertCode":
-                    foreach (DataGridViewRow Row in ValuesGrid.SelectedRows)
-                    {
-                        Row.Cells[1].Value = ConvertCode((string)Row.Cells[1].Value);
-                    }
                     foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
                     {
                         Cell.OwningRow.Cells[1].Value = ConvertCode((string)Cell.OwningRow.Cells[1].Value);
+                    }
+                    break;
+                case "ValuesGridRefreshItem":
+                    foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
+                    {
+                        string TextAddress = (string)Cell.OwningRow.Cells[1].Value;
+                        uint Address;
+
+                        if (HexRegex.IsMatch(TextAddress))
+                        {
+                            Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(TextAddress).Reverse().ToArray(), 0); ;
+                        }
+                        else
+                        {
+                            Match TopMatch = ParserRegex.Match(TextAddress);
+
+                            if (!TopMatch.Success)
+                            {
+                                return;
+                            }
+
+                            Pointers.Clear();
+                            Address = ResolvePointer(TopMatch);
+                            Pointers.Clear();
+                        }
+
+                        if (!IsValidMemoryAddress(Address) || Cell.OwningRow.Cells[3].Value == null)
+                        {
+                            continue;
+                        }
+
+                        DataTypeExact DataType = DataTypeExactTool.GetValue((string)Cell.OwningRow.Cells[3].Value);
+
+                        byte[] Value = GetMemoryAtAddress(Processes.Text.Split('|')[0], Address, DataType);
+
+                        Cell.OwningRow.Cells[2].Value = GetDisplayForByteArray(Value, DataType);
                     }
                     break;
             }

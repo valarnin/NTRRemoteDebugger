@@ -76,6 +76,7 @@
             this.LabelDash = new System.Windows.Forms.Label();
             this.ButtonConfig = new System.Windows.Forms.Button();
             this.LabelButtonState = new System.Windows.Forms.Label();
+            this.ValuesGridRefreshItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -193,7 +194,6 @@
             this.ValuesGrid.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.ValuesGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.ValuesGrid.ShowCellErrors = false;
-            this.ValuesGrid.ShowCellToolTips = false;
             this.ValuesGrid.ShowEditingIcon = false;
             this.ValuesGrid.ShowRowErrors = false;
             this.ValuesGrid.Size = new System.Drawing.Size(377, 327);
@@ -235,11 +235,12 @@
             // ValuesGridContextMenuStrip
             // 
             this.ValuesGridContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ValuesGridRefreshItem,
             this.ValuesGridAddItem,
             this.ValuesGridDeleteItem,
             this.ValuesGridConvertCode});
             this.ValuesGridContextMenuStrip.Name = "ValuesGridContextMenuStrip";
-            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(186, 70);
+            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(186, 92);
             this.ValuesGridContextMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.ValuesGridContextMenuStrip_ItemClicked);
             // 
             // ValuesGridAddItem
@@ -537,6 +538,12 @@
             this.LabelButtonState.Size = new System.Drawing.Size(280, 15);
             this.LabelButtonState.TabIndex = 41;
             // 
+            // ValuesGridRefreshItem
+            // 
+            this.ValuesGridRefreshItem.Name = "ValuesGridRefreshItem";
+            this.ValuesGridRefreshItem.Size = new System.Drawing.Size(185, 22);
+            this.ValuesGridRefreshItem.Text = "Refresh";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -642,5 +649,6 @@
         private System.Windows.Forms.Label LabelDash;
         private System.Windows.Forms.Button ButtonConfig;
         private System.Windows.Forms.Label LabelButtonState;
+        private System.Windows.Forms.ToolStripMenuItem ValuesGridRefreshItem;
     }
 }
