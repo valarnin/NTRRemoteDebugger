@@ -140,6 +140,28 @@ namespace NTRDebuggerTool
             }
         }
         #endregion
+
+        #region DevkitProPath
+        private const string DefaultDevkitProPath = "";
+        private static string devkitProPath = null;
+        public static string DevkitProPath
+        {
+            get
+            {
+                if (devkitProPath == null)
+                {
+                    string TempVal = GetValue("DevkitProPath");
+                    devkitProPath = string.IsNullOrWhiteSpace(TempVal) ? DefaultDevkitProPath : TempVal;
+                }
+                return devkitProPath;
+            }
+            set
+            {
+                devkitProPath = value;
+                SetValue("DevkitProPath", value);
+            }
+        }
+        #endregion
         #endregion
 
         #region Add to default set here
@@ -176,6 +198,10 @@ namespace NTRDebuggerTool
                 {
                     All.Add("LockValuesDelay", LockValuesDelay.ToString());
                 }
+                if (!All.ContainsKey("DevkitProPath"))
+                {
+                    All.Add("DevkitProPath", DevkitProPath.ToString());
+                }
                 return All;
             }
             set
@@ -200,6 +226,7 @@ namespace NTRDebuggerTool
             ConnectTimeout = DefaultConnectTimeout;
             ConnectTries = DefaultConnectTries;
             LockValuesDelay = DefaultLockValuesDelay;
+            DevkitProPath = DefaultDevkitProPath;
         }
 
         #endregion
