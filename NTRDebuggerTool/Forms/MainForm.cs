@@ -539,6 +539,19 @@ namespace NTRDebuggerTool.Forms
             return Criteria.AddressesFound.Values.First();
         }
 
+        private void ValuesGrid_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == 0)
+            {
+                ValuesGrid.BeginEdit(true);
+            }
+            else if (e.ColumnIndex == 3)
+            {
+                ValuesGrid.BeginEdit(true);
+                ((ComboBox)ValuesGrid.EditingControl).DroppedDown = true;
+            }
+        }
+
         private void ValuesGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             ValuesGrid.BeginEdit(true);

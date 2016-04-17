@@ -200,6 +200,7 @@
             this.ValuesGrid.ShowRowErrors = false;
             this.ValuesGrid.Size = new System.Drawing.Size(377, 327);
             this.ValuesGrid.TabIndex = 12;
+            this.ValuesGrid.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellClick);
             this.ValuesGrid.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellDoubleClick);
             this.ValuesGrid.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellLeave);
             this.ValuesGrid.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.ValuesGrid_CellValueChanged);
@@ -244,7 +245,7 @@
             this.ValuesGridPointerSearch,
             this.ValuesGridCopyResolvedAddress});
             this.ValuesGridContextMenuStrip.Name = "ValuesGridContextMenuStrip";
-            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(198, 158);
+            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(198, 136);
             this.ValuesGridContextMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.ValuesGridContextMenuStrip_ItemClicked);
             // 
             // ValuesGridRefreshItem
