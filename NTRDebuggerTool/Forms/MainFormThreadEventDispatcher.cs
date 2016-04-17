@@ -3,6 +3,7 @@ using NTRDebuggerTool.Objects;
 using System;
 using System.Linq;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace NTRDebuggerTool.Forms
 {
@@ -149,12 +150,20 @@ namespace NTRDebuggerTool.Forms
                 {
                     Form.NTRConnection.SetCurrentOperationText = "Invalid search criteria!";
                     Form.SearchComplete = true;
+                    if (Form.LastSearchCriteria == null)
+                    {
+                        Form.ControlEnabledSearchButton = Form.ControlEnabledDataType = Form.ControlEnabledMemoryRange = true;
+                    }
                     return;
                 }
                 if (CurrentSelectedSearchType == SearchTypeBase.Range && string.IsNullOrWhiteSpace(Form.SearchValue2.Text))
                 {
                     Form.NTRConnection.SetCurrentOperationText = "Invalid range criteria!";
                     Form.SearchComplete = true;
+                    if (Form.LastSearchCriteria == null)
+                    {
+                        Form.ControlEnabledSearchButton = Form.ControlEnabledDataType = Form.ControlEnabledMemoryRange = true;
+                    }
                     return;
                 }
             }
@@ -190,6 +199,20 @@ namespace NTRDebuggerTool.Forms
             if (CurrentSelectedSearchType == SearchTypeBase.Range)
             {
                 Form.LastSearchCriteria.SearchValue2 = GetValueForDataType(CurrentSelectedDataType, Form.SearchValue2.Text);
+            }
+
+            if (Form.LastSearchCriteria.FirstSearch && CurrentMemoryRange.Equals("All") && Form.LastSearchCriteria.SearchType != SearchTypeBase.Range && Form.LastSearchCriteria.SearchValue.All(x => x.Equals(0)))
+            {
+                Form.FormEnabled = false;
+                DialogResult DialogResult = MessageBox.Show("You're about to search for value 0 (or functional equivalent) across all memory ranges. This operation will take a long time and may cause issues. Are you sure you want to search for this value?", "Warning", MessageBoxButtons.YesNo);
+                Form.FormEnabled = true;
+                if (DialogResult != DialogResult.Yes)
+                {
+                    Form.LastSearchCriteria = null;
+                    Form.SearchComplete = true;
+                    Form.ControlEnabledSearchButton = Form.ControlEnabledDataType = Form.ControlEnabledMemoryRange = true;
+                    return;
+                }
             }
 
             Form.NTRConnection.SearchCriteria.Add(Form.LastSearchCriteria);

@@ -20,13 +20,13 @@ namespace NTRDebuggerTool.Forms
         private bool ControlEnabledProcesses = false;
         internal bool ControlEnabledButtonOpenProcess = false;
 
-        private bool ControlEnabledMemoryRange = false;
+        internal bool ControlEnabledMemoryRange = false;
         private bool ControlEnabledButtonRefreshMemoryRange = false;
         private bool ControlEnabledButtonAddResults = false;
         private bool ControlEnabledResetButton = false;
         private bool ControlEnabledResultsGrid = false;
         internal bool ControlEnabledSearchButton = false;
-        private bool ControlEnabledDataType = false;
+        internal bool ControlEnabledDataType = false;
         private bool ControlEnabledSearchType = false;
         private bool ControlEnabledSearchValue = false;
         private bool ControlEnabledSearchValue2 = false;
