@@ -44,6 +44,7 @@
             this.ValuesGridValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ValuesGridTypeColumn = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.ValuesGridContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.ValuesGridRefreshItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridAddItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridDeleteItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridConvertCode = new System.Windows.Forms.ToolStripMenuItem();
@@ -76,7 +77,8 @@
             this.LabelDash = new System.Windows.Forms.Label();
             this.ButtonConfig = new System.Windows.Forms.Button();
             this.LabelButtonState = new System.Windows.Forms.Label();
-            this.ValuesGridRefreshItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ValuesGridPointerSearch = new System.Windows.Forms.ToolStripMenuItem();
+            this.ValuesGridCopyResolvedAddress = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -238,27 +240,35 @@
             this.ValuesGridRefreshItem,
             this.ValuesGridAddItem,
             this.ValuesGridDeleteItem,
-            this.ValuesGridConvertCode});
+            this.ValuesGridConvertCode,
+            this.ValuesGridPointerSearch,
+            this.ValuesGridCopyResolvedAddress});
             this.ValuesGridContextMenuStrip.Name = "ValuesGridContextMenuStrip";
-            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(186, 92);
+            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(198, 158);
             this.ValuesGridContextMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.ValuesGridContextMenuStrip_ItemClicked);
+            // 
+            // ValuesGridRefreshItem
+            // 
+            this.ValuesGridRefreshItem.Name = "ValuesGridRefreshItem";
+            this.ValuesGridRefreshItem.Size = new System.Drawing.Size(197, 22);
+            this.ValuesGridRefreshItem.Text = "Refresh";
             // 
             // ValuesGridAddItem
             // 
             this.ValuesGridAddItem.Name = "ValuesGridAddItem";
-            this.ValuesGridAddItem.Size = new System.Drawing.Size(185, 22);
+            this.ValuesGridAddItem.Size = new System.Drawing.Size(197, 22);
             this.ValuesGridAddItem.Text = "New";
             // 
             // ValuesGridDeleteItem
             // 
             this.ValuesGridDeleteItem.Name = "ValuesGridDeleteItem";
-            this.ValuesGridDeleteItem.Size = new System.Drawing.Size(185, 22);
+            this.ValuesGridDeleteItem.Size = new System.Drawing.Size(197, 22);
             this.ValuesGridDeleteItem.Text = "Delete";
             // 
             // ValuesGridConvertCode
             // 
             this.ValuesGridConvertCode.Name = "ValuesGridConvertCode";
-            this.ValuesGridConvertCode.Size = new System.Drawing.Size(185, 22);
+            this.ValuesGridConvertCode.Size = new System.Drawing.Size(197, 22);
             this.ValuesGridConvertCode.Text = "Convert AR3DS Code";
             // 
             // LabelIPPort
@@ -383,6 +393,7 @@
             // GUIUpdateTimer
             // 
             this.GUIUpdateTimer.Enabled = true;
+            this.GUIUpdateTimer.Interval = 5;
             this.GUIUpdateTimer.Tick += new System.EventHandler(this.GUIUpdateTimer_Tick);
             // 
             // LabelCustomRange
@@ -538,11 +549,17 @@
             this.LabelButtonState.Size = new System.Drawing.Size(280, 15);
             this.LabelButtonState.TabIndex = 41;
             // 
-            // ValuesGridRefreshItem
+            // ValuesGridPointerSearch
             // 
-            this.ValuesGridRefreshItem.Name = "ValuesGridRefreshItem";
-            this.ValuesGridRefreshItem.Size = new System.Drawing.Size(185, 22);
-            this.ValuesGridRefreshItem.Text = "Refresh";
+            this.ValuesGridPointerSearch.Name = "ValuesGridPointerSearch";
+            this.ValuesGridPointerSearch.Size = new System.Drawing.Size(197, 22);
+            this.ValuesGridPointerSearch.Text = "Pointer Scan";
+            // 
+            // ValuesGridCopyResolvedAddress
+            // 
+            this.ValuesGridCopyResolvedAddress.Name = "ValuesGridCopyResolvedAddress";
+            this.ValuesGridCopyResolvedAddress.Size = new System.Drawing.Size(197, 22);
+            this.ValuesGridCopyResolvedAddress.Text = "Copy Resolved Address";
             // 
             // MainForm
             // 
@@ -618,7 +635,7 @@
         private System.Windows.Forms.Button ButtonRefreshMemoryRange;
         internal System.Windows.Forms.TextBox IP;
         internal System.Windows.Forms.TextBox Port;
-        private System.Windows.Forms.ComboBox Processes;
+        internal System.Windows.Forms.ComboBox Processes;
         private System.Windows.Forms.ComboBox MemoryRange;
         private System.Windows.Forms.StatusStrip ProgressBarStatusStrip;
         private System.Windows.Forms.ProgressBar ProgressBarMemoryRead;
@@ -650,5 +667,7 @@
         private System.Windows.Forms.Button ButtonConfig;
         private System.Windows.Forms.Label LabelButtonState;
         private System.Windows.Forms.ToolStripMenuItem ValuesGridRefreshItem;
+        private System.Windows.Forms.ToolStripMenuItem ValuesGridPointerSearch;
+        private System.Windows.Forms.ToolStripMenuItem ValuesGridCopyResolvedAddress;
     }
 }

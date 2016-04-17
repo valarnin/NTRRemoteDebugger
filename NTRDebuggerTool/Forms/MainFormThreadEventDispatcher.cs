@@ -11,11 +11,16 @@ namespace NTRDebuggerTool.Forms
         internal bool DispatchConnect = false;
         internal bool DispatchOpenProcess = false;
         internal bool DispatchSearch = false;
+        internal bool DispatchConfig = false;
+        internal string DispatchPointerSearch = null;
 
         internal string CurrentSelectedProcess = "";
         internal string CurrentMemoryRange = "";
         internal DataTypeExact CurrentSelectedDataType;
         internal SearchTypeBase CurrentSelectedSearchType;
+
+        internal string FoundPointerAddress = null;
+
         private MainForm Form;
 
         internal MainFormThreadEventDispatcher(MainForm Form)
@@ -43,9 +48,39 @@ namespace NTRDebuggerTool.Forms
                     DispatchSearch = false;
                     DoSearch();
                 }
+                if (DispatchConfig)
+                {
+                    DispatchConfig = false;
+                    DoConfig();
+                }
+                if (DispatchPointerSearch != null)
+                {
+                    string TempAddress = DispatchPointerSearch;
+                    DispatchPointerSearch = null;
+                    DoPointerSearch(TempAddress);
+                }
 
                 Thread.Sleep(100);
             }
+        }
+
+        private void DoPointerSearch(string TempAddress)
+        {
+            Form.FormEnabled = false;
+            PointerScanDialog Dialog = new PointerScanDialog(Form, TempAddress, CurrentSelectedProcess);
+            Dialog.ShowDialog();
+            FoundPointerAddress = Dialog.PointerFound;
+            Dialog.Dispose();
+            Form.FormEnabled = true;
+        }
+
+        private void DoConfig()
+        {
+            Form.FormEnabled = false;
+            ConfigDialog Dialog = new ConfigDialog(Form);
+            Dialog.ShowDialog();
+            Dialog.Dispose();
+            Form.FormEnabled = true;
         }
 
         private void DoConnect()

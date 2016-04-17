@@ -5,8 +5,11 @@ namespace NTRDebuggerTool.Forms
 {
     public partial class ConfigDialog : Form
     {
-        public ConfigDialog()
+        MainForm Form;
+
+        public ConfigDialog(MainForm Form)
         {
+            this.Form = Form;
             InitializeComponent();
             Dictionary<string, string> ConfigValues = Config.All;
             foreach (string Key in ConfigValues.Keys)

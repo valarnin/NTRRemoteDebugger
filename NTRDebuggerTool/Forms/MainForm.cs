@@ -35,8 +35,12 @@ namespace NTRDebuggerTool.Forms
         private bool ControlEnabledStart = false;
         private bool ControlEnabledSize = false;
 
+        internal bool FormEnabled = true;
+
         private Thread EventDispatcherThread;
         private Thread ButtonStateThread;
+
+        private int PointerSearchRow = 0;
 
         internal string SetConnectText = null;
 
@@ -134,22 +138,33 @@ namespace NTRDebuggerTool.Forms
 
         private void GUIUpdateTimer_Tick(object sender, EventArgs e)
         {
+            if (Enabled != FormEnabled)
+            {
+                Enabled = FormEnabled;
+                if (FormEnabled)
+                {
+                    Activate();
+                }
+            }
+
             NTRConnection.SendHeartbeatPacket();
 
-            if (NTRConnection.ProgressReadMax > 0)
+            int LocalReadMax = (int)NTRConnection.ProgressReadMax, LocalRead = (int)NTRConnection.ProgressRead, LocalScanMax = (int)NTRConnection.ProgressScanMax, LocalScan = (int)NTRConnection.ProgressScan;
+
+            if (LocalReadMax > 0 && LocalRead >= 0 && LocalReadMax >= LocalRead)
             {
-                ProgressBarMemoryRead.Maximum = (int)NTRConnection.ProgressReadMax;
-                ProgressBarMemoryRead.Value = (int)NTRConnection.ProgressRead;
+                ProgressBarMemoryRead.Maximum = LocalReadMax;
+                ProgressBarMemoryRead.Value = LocalRead;
             }
             else
             {
                 ProgressBarMemoryRead.Maximum = ProgressBarMemoryRead.Value = 0;
             }
 
-            if (NTRConnection.ProgressScanMax > 0)
+            if (LocalScanMax > 0 && LocalScan >= 0 && LocalScanMax >= LocalScan)
             {
-                ProgressBarMemoryScan.Maximum = (int)NTRConnection.ProgressScanMax;
-                ProgressBarMemoryScan.Value = (int)NTRConnection.ProgressScan;
+                ProgressBarMemoryScan.Maximum = LocalScanMax;
+                ProgressBarMemoryScan.Value = LocalScan;
             }
             else
             {
@@ -246,6 +261,12 @@ namespace NTRDebuggerTool.Forms
                     Pointers.Clear();
                     LockValuesStopwatch.Restart();
                 }
+            }
+
+            if (ThreadEventDispatcher.FoundPointerAddress != null)
+            {
+                ValuesGrid[1, PointerSearchRow].Value = ThreadEventDispatcher.FoundPointerAddress;
+                ThreadEventDispatcher.FoundPointerAddress = null;
             }
         }
 
@@ -676,6 +697,22 @@ namespace NTRDebuggerTool.Forms
         {
             switch (e.ClickedItem.Name)
             {
+                case "ValuesGridCopyResolvedAddress":
+                    foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
+                    {
+                        Clipboard.SetText(Cell.OwningRow.Cells[1].ToolTipText);
+                        break;
+                    }
+                    break;
+                case "ValuesGridPointerSearch":
+                    foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
+                    {
+                        PointerSearchRow = Cell.OwningRow.Index;
+                        ThreadEventDispatcher.CurrentSelectedProcess = Processes.Text.Split('|')[0];
+                        ThreadEventDispatcher.DispatchPointerSearch = (string)Cell.OwningRow.Cells[1].Value;
+                        break;
+                    }
+                    break;
                 case "ValuesGridDeleteItem":
                     foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
                     {
@@ -759,14 +796,19 @@ namespace NTRDebuggerTool.Forms
 
         private bool IsValidMemoryAddress(uint Address)
         {
+            return GetAddressSpaceForAddress(Address) != null;
+        }
+
+        internal Nullable<KeyValuePair<uint, uint>> GetAddressSpaceForAddress(uint Address)
+        {
             foreach (uint RangeStart in NTRConnection.AddressSpaces.Keys)
             {
                 if (Address >= RangeStart && Address <= (RangeStart + NTRConnection.AddressSpaces[RangeStart]))
                 {
-                    return true;
+                    return new KeyValuePair<uint, uint>(RangeStart, NTRConnection.AddressSpaces[RangeStart]);
                 }
             }
-            return false;
+            return null;
         }
 
         private uint GetConversionModifier(uint Address)
@@ -786,9 +828,7 @@ namespace NTRDebuggerTool.Forms
 
         private void ButtonConfig_Click(object sender, EventArgs e)
         {
-            ConfigDialog Dialog = new ConfigDialog();
-            Dialog.ShowDialog(this);
-            Dialog.Dispose();
+            ThreadEventDispatcher.DispatchConfig = true;
         }
 
         private void Memory_TextChanged(object sender, EventArgs e)
