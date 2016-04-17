@@ -227,6 +227,8 @@ namespace NTRDebuggerTool.Remote
             if (SearchCriteria[0].AddressesFound.Count > 0 && (SearchCriteria[0].AddressesFound.Count < 200 || SearchCriteria[0].StartAddress == uint.MaxValue))
             {
                 uint TempAddress = SearchCriteria[0].StartAddress;
+                uint TempLength = SearchCriteria[0].Length;
+                SearchCriteria[0].Length = (uint)SearchCriteria[0].AddressesFound[SearchCriteria[0].AddressesFound.Keys.First()].Length;
                 //Clone the list to an array to prevent concurrent modification
                 foreach (uint Address in new List<uint>(SearchCriteria[0].AddressesFound.Keys))
                 {
@@ -234,6 +236,7 @@ namespace NTRDebuggerTool.Remote
                     SearchCriteria[0].StartAddress = Address;
                     SendReadMemoryPacket();
                 }
+                SearchCriteria[0].Length = TempLength;
                 SearchCriteria[0].StartAddress = TempAddress;
             }
             else if (SearchCriteria[0].StartAddress == uint.MaxValue)
