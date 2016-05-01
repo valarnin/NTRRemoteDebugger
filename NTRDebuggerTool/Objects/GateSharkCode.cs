@@ -1,12 +1,69 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace NTRDebuggerTool.Objects
 {
     class GateSharkCode
     {
-        public GateSharkCode(string code)
-        {
+        GateSharkCodeOperation operation;
 
+        internal uint loadedValue;
+        internal bool returnToTopLevel = false, isInCType = false;
+
+        public GateSharkCode() { }
+
+        public void ParseCode(string code)
+        {
+            operation = new GateSharkCodeOperation();
+            operation.operationType = OperationType.TopLevelOperation;
+            operation.ParseCode(code);
+        }
+
+        private class GateSharkCodeOperation
+        {
+            private List<GateSharkCodeOperation> operations = new List<GateSharkCodeOperation>();
+            internal OperationType operationType;
+
+            private uint leftCode, rightCode;
+
+            public string ParseCode(string code)
+            {
+                string[] codeLines = code.Split(new string[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < codeLines.Length; ++i)
+                {
+                    string[] lineParts = codeLines[i].Split(' ');
+
+                    uint leftCode = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(lineParts[0]), 0);
+                    uint rightCode = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(lineParts[1]), 0);
+
+                    OperationType opType = (OperationType)(leftCode & 0xF0000000);
+                    if (opType == OperationType.DTypeTest)
+                    {
+                        opType = (OperationType)(leftCode & 0xFF000000);
+                    }
+
+                    GateSharkCodeOperation operation = new GateSharkCodeOperation();
+                    operation.operationType = opType;
+                    operation.leftCode = leftCode;
+                    operation.rightCode = rightCode;
+
+                    switch (opType)
+                    {
+                        case OperationType.ConditionalGreaterThan4Byte:
+                        case OperationType.ConditionalLessThan4Byte:
+                        case OperationType.ConditionalEqual4Byte:
+                        case OperationType.ConditionalNotEqual4Byte:
+                        case OperationType.ConditionalGreaterThan2Byte:
+                        case OperationType.ConditionalLessThan2Byte:
+                        case OperationType.ConditionalEqual2Byte:
+                        case OperationType.ConditionalNotEqual2Byte:
+                        case OperationType.ButtonStateRequire:
+                            break;
+                        case OperationType.WriteRange:
+                            break;
+                    }
+                }
+            }
         }
 
         #region Pulled from http://gbatemp.net/threads/i-need-help-understanding-these-d-code-lines-please.417985/#post-6151997
@@ -33,16 +90,17 @@ namespace NTRDebuggerTool.Objects
             LoadPointer = 0xD3000000,
             AddToLoadedPointer = 0xD4000000,
             SetLoadedPointer = 0xD5000000,
-            Unknown14Byte = 0xD6000000,
-            Unknown12Byte = 0xD7000000,
-            Unknown11Byte = 0xD8000000,
+            SetAndInc4Byte = 0xD6000000,
+            SetAndInc2Byte = 0xD7000000,
+            SetAndInc1Byte = 0xD8000000,
             LoadValue4Byte = 0xD9000000,
             LoadValue2Byte = 0xDA000000,
             LoadValue1Byte = 0xDB000000,
-            Unknown24Byte = 0xD0000000,
+            Unknown24Byte = 0xDC000000,
             ButtonStateRequire = 0xDD000000,
             WriteRegion = 0xE0000000,
-            UnusedFCode = 0xF0000000
+            UnusedFCode = 0xF0000000,
+            TopLevelOperation = 0xFFFFFFFF
         }
 
         [Flags]
