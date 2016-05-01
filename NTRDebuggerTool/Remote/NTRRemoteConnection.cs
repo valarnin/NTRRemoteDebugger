@@ -1,7 +1,6 @@
 ﻿using NTRDebuggerTool.Objects;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,6 +12,7 @@ namespace NTRDebuggerTool.Remote
 {
     public class NTRRemoteConnection
     {
+        private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         #region Members
 
         public string HardwarePID = null;
@@ -20,7 +20,7 @@ namespace NTRDebuggerTool.Remote
         public String IP { get; set; }
         public Int16 Port { get; set; }
 
-        public ReadOnlyDictionary<uint, uint> AddressSpaces;
+        public Dictionary<uint, uint> AddressSpaces;
 
         public uint ProgressRead = 0;
         public uint ProgressReadMax = 0;
@@ -71,7 +71,7 @@ namespace NTRDebuggerTool.Remote
             }
             catch (Exception e)
             {
-                System.Console.WriteLine(e);
+                LOGGER.Error(null, e);
                 this.ReleasesDocument = null;
             }
         }
@@ -101,7 +101,7 @@ namespace NTRDebuggerTool.Remote
                 }
                 catch (Exception e)
                 {
-                    System.Console.WriteLine(e);
+                    LOGGER.Error(null, e);
                     Disconnected = true;
                 }
                 if (Disconnected)
@@ -132,7 +132,7 @@ namespace NTRDebuggerTool.Remote
                 }
                 catch (Exception e)
                 {
-                    System.Console.WriteLine(e);
+                    LOGGER.Error(null, e);
                     return false;
                 }
             }
@@ -154,7 +154,7 @@ namespace NTRDebuggerTool.Remote
             }
             catch (Exception e)
             {
-                System.Console.WriteLine(e);
+                LOGGER.Error(null, e);
             }
             Client = null;
             IsConnected = false;
@@ -321,7 +321,7 @@ namespace NTRDebuggerTool.Remote
                         }
                         catch (Exception e)
                         {
-                            System.Console.WriteLine(e);
+                            LOGGER.Error(null, e);
                         }
                     }
                 }

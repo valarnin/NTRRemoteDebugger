@@ -233,7 +233,7 @@ namespace NTRDebuggerTool
 
         #region XML Stuff
 
-        private static string ConfigFileDirectory = Directory.GetParent(Application.UserAppDataPath).FullName;
+        public static string ConfigFileDirectory = Directory.GetParent(Application.UserAppDataPath).FullName;
         private static string ConfigFilePath = ConfigFileDirectory + Path.DirectorySeparatorChar + "NTRDebuggerTool.config.xml";
         private static XmlDocument ConfigFile;
 

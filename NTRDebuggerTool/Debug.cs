@@ -3,38 +3,15 @@ using NTRDebuggerTool.Objects;
 using NTRDebuggerTool.Remote;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace NTRDebuggerTool
 {
     class Debug
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool AllocConsole();
-
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-        const int SW_HIDE = 0;
-        const int SW_SHOW = 5;
-
         internal static void Execute()
         {
-            IntPtr Handle = GetConsoleWindow();
-            if (Handle == IntPtr.Zero)
-            {
-                AllocConsole();
-            }
-            else
-            {
-                ShowWindow(Handle, SW_SHOW);
-            }
             NTRRemoteConnection Conn = new NTRRemoteConnection();
             Console.WriteLine("Connecting...");
             Conn.IP = "192.168.1.29";
@@ -57,7 +34,7 @@ namespace NTRDebuggerTool
             {
                 Thread.Sleep(10);
             }
-            Dictionary<string, ReadOnlyDictionary<uint, uint>> Procs = new Dictionary<string, ReadOnlyDictionary<uint, uint>>();
+            Dictionary<string, Dictionary<uint, uint>> Procs = new Dictionary<string, Dictionary<uint, uint>>();
             foreach (string ProcFull in Conn.Processes)
             {
                 string Proc = ProcFull.Split('|')[0];

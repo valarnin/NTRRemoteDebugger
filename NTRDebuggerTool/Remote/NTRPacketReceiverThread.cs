@@ -10,6 +10,8 @@ namespace NTRDebuggerTool.Remote
 {
     class NTRPacketReceiverThread
     {
+        private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private NTRRemoteConnection NTRConnection;
 
         private uint DataRead = 0;
@@ -69,7 +71,7 @@ namespace NTRDebuggerTool.Remote
                 }
                 catch (Exception e)
                 {
-                    System.Console.WriteLine(e);
+                    LOGGER.Error(null, e);
                     break;
                 }
             }
@@ -231,7 +233,7 @@ namespace NTRDebuggerTool.Remote
 
             if (AddressSpaces.Count > 0)
             {
-                this.NTRConnection.AddressSpaces = new ReadOnlyDictionary<uint, uint>(AddressSpaces);
+                this.NTRConnection.AddressSpaces = new Dictionary<uint, uint>(AddressSpaces);
 
                 this.NTRConnection.IsMemoryListUpdated = true;
             }
@@ -300,11 +302,6 @@ namespace NTRDebuggerTool.Remote
 
         private bool CheckCriteria(uint RealAddress, byte[] RemoteValue)
         {
-            //Debug code
-            if (RealAddress == 0x080823B4)
-            {
-                if (true) ;
-            }
             switch (NTRConnection.SearchCriteria[0].SearchType)
             {
                 case SearchTypeBase.Exact:

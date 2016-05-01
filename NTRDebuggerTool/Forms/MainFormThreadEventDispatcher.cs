@@ -1,7 +1,10 @@
 ﻿using NTRDebuggerTool.Forms.FormEnums;
 using NTRDebuggerTool.Objects;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -14,6 +17,9 @@ namespace NTRDebuggerTool.Forms
         internal bool DispatchSearch = false;
         internal bool DispatchConfig = false;
         internal string DispatchPointerSearch = null;
+        public ConcurrentQueue<MemoryDispatch> RefreshValueAddresses = new ConcurrentQueue<MemoryDispatch>(),
+        RefreshValueReturn = new ConcurrentQueue<MemoryDispatch>(),
+        WriteAddress = new ConcurrentQueue<MemoryDispatch>();
 
         internal string CurrentSelectedProcess = "";
         internal string CurrentMemoryRange = "";
@@ -23,6 +29,9 @@ namespace NTRDebuggerTool.Forms
         internal string FoundPointerAddress = null;
 
         private MainForm Form;
+        private Regex HexRegex = new Regex("^[0-9A-F]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Regex ParserRegex = new Regex("\\(\\*(?<Address>.+)\\)(?<Offset>(?:\\[[0-9A-F]+\\])?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private Dictionary<uint, uint> Pointers = new Dictionary<uint, uint>();
 
         internal MainFormThreadEventDispatcher(MainForm Form)
         {
@@ -59,6 +68,42 @@ namespace NTRDebuggerTool.Forms
                     string TempAddress = DispatchPointerSearch;
                     DispatchPointerSearch = null;
                     DoPointerSearch(TempAddress);
+                }
+                while (RefreshValueAddresses.Count > 0)
+                {
+                    MemoryDispatch Row = new MemoryDispatch();
+                    RefreshValueAddresses.TryDequeue(out Row);
+                    Row.Value = GetMemoryAtAddress(CurrentSelectedProcess, Row.TextAddress, Row.Type);
+                    RefreshValueReturn.Enqueue(Row);
+                }
+                while (WriteAddress.Count > 0)
+                {
+                    MemoryDispatch Row = new MemoryDispatch();
+                    WriteAddress.TryDequeue(out Row);
+                    uint Address;
+
+                    if (HexRegex.IsMatch(Row.TextAddress))
+                    {
+                        Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Row.TextAddress).Reverse().ToArray(), 0); ;
+                    }
+                    else
+                    {
+                        Match TopMatch = ParserRegex.Match(Row.TextAddress);
+
+                        if (!TopMatch.Success)
+                        {
+                            return;
+                        }
+
+                        Address = ResolvePointer(TopMatch);
+                    }
+
+                    if (Form.IsValidMemoryAddress(Address))
+                    {
+                        Row.ResolvedAddress = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
+                        uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(CurrentSelectedProcess.Split('|')[0]), 0);
+                        Form.NTRConnection.SendWriteMemoryPacket(ProcessID, Address, Row.Value);
+                    }
                 }
 
                 Thread.Sleep(100);
@@ -243,6 +288,78 @@ namespace NTRDebuggerTool.Forms
                 default: //Text
                     return System.Text.Encoding.Default.GetBytes(Value);
             }
+        }
+
+        private uint ResolvePointer(Match Match)
+        {
+            string AddressString = Match.Groups["Address"].Value;
+            string OffsetString = Match.Groups["Offset"].Value;
+
+
+            uint Address;
+
+            Match RecurseMatch = ParserRegex.Match(AddressString);
+
+            if (RecurseMatch.Success)
+            {
+                Address = ResolvePointer(RecurseMatch);
+            }
+            else
+            {
+                uint Pointer = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(AddressString).Reverse().ToArray(), 0);
+                if (!Pointers.ContainsKey(Pointer))
+                {
+                    byte[] Data = GetMemoryAtAddress(CurrentSelectedProcess, AddressString, DataTypeExact.Bytes4);
+
+                    Address = BitConverter.ToUInt32(Data, 0);
+                    Pointers[Pointer] = Address;
+                }
+                else if (!Form.IsValidMemoryAddress(Pointer))
+                {
+                    return 0;
+                }
+                else
+                {
+                    Address = Pointers[Pointer];
+                }
+            }
+
+            if (Address != 0 && !string.IsNullOrWhiteSpace(OffsetString))
+            {
+                OffsetString = OffsetString.Replace("[", "").Replace("]", "");
+                Address += BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(OffsetString.PadLeft(8, '0')).Reverse().ToArray(), 0);
+            }
+
+            return Address;
+        }
+
+        internal byte[] GetMemoryAtAddress(string ProcessID, string Address, DataTypeExact DataType)
+        {
+            return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0), DataType);
+        }
+
+        internal byte[] GetMemoryAtAddress(uint ProcessID, string Address, DataTypeExact DataType)
+        {
+            return GetMemoryAtAddress(ProcessID, BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0), DataType);
+        }
+
+        internal byte[] GetMemoryAtAddress(string ProcessID, uint Address, DataTypeExact DataType)
+        {
+            return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), Address, DataType);
+        }
+
+        internal byte[] GetMemoryAtAddress(uint ProcessID, uint Address, DataTypeExact DataType)
+        {
+            SearchCriteria Criteria = new SearchCriteria();
+            Criteria.ProcessID = ProcessID;
+            Criteria.DataType = DataType;
+            Criteria.StartAddress = Address;
+            Criteria.Length = Criteria.Size = Form.GetSearchMemorySize(DataType);
+            Criteria.SearchType = SearchTypeBase.Unknown;
+            Criteria.SearchValue = new byte[] { 0 };
+            Form.NTRConnection.SearchCriteria.Add(Criteria);
+            Form.NTRConnection.SendReadMemoryPacket(Criteria);
+            return Criteria.AddressesFound.Values.First();
         }
     }
 }

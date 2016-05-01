@@ -28,6 +28,18 @@ namespace NTRDebuggerTool.Forms.FormEnums
         {
             return Mapping[key];
         }
+
+        public static string GetKey(DataTypeExact value)
+        {
+            foreach (string key in Mapping.Keys)
+            {
+                if (Mapping[key] == value)
+                {
+                    return key;
+                }
+            }
+            return null;
+        }
     }
 
     public enum DataTypeExact

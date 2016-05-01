@@ -63,6 +63,7 @@ namespace NTRDebuggerTool.Objects
                             break;
                     }
                 }
+                return null;
             }
         }
 

@@ -1,11 +1,12 @@
 ﻿using NTRDebuggerTool.Forms.FormEnums;
 using NTRDebuggerTool.Objects;
+using NTRDebuggerTool.Objects.Saving;
 using NTRDebuggerTool.Remote;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -37,8 +38,6 @@ namespace NTRDebuggerTool.Forms
 
         internal bool FormEnabled = true;
 
-        private bool LoadAddresses = false;
-
         private Thread EventDispatcherThread;
         private Thread ButtonStateThread;
 
@@ -54,12 +53,7 @@ namespace NTRDebuggerTool.Forms
 
         internal SearchCriteria LastSearchCriteria;
 
-        private Regex HexRegex = new Regex("^[0-9A-F]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private Regex ParserRegex = new Regex("\\(\\*(?<Address>.+)\\)(?<Offset>(?:\\[[0-9A-F]+\\])?)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
         private Stopwatch LockValuesStopwatch = new Stopwatch();
-
-        private Dictionary<uint, uint> Pointers = new Dictionary<uint, uint>();
 
         public MainForm(NTRRemoteConnection NTRConnection)
         {
@@ -255,7 +249,6 @@ namespace NTRDebuggerTool.Forms
             {
                 if (LockValuesStopwatch.ElapsedMilliseconds > Config.LockValuesDelay)
                 {
-                    Pointers.Clear();
                     for (int i = 0; i < ValuesGrid.Rows.Count; ++i)
                     {
                         if (ValuesGrid[0, i].Value is string)
@@ -263,7 +256,6 @@ namespace NTRDebuggerTool.Forms
                             SetMemory(i);
                         }
                     }
-                    Pointers.Clear();
                     LockValuesStopwatch.Restart();
                 }
             }
@@ -272,6 +264,16 @@ namespace NTRDebuggerTool.Forms
             {
                 ValuesGrid[1, PointerSearchRow].Value = ThreadEventDispatcher.FoundPointerAddress;
                 ThreadEventDispatcher.FoundPointerAddress = null;
+            }
+
+            if (ThreadEventDispatcher.RefreshValueReturn.Count > 0)
+            {
+                MemoryDispatch MemoryDispatch;
+                while (ThreadEventDispatcher.RefreshValueReturn.TryDequeue(out MemoryDispatch))
+                {
+                    ValuesGrid[1, MemoryDispatch.Row].ToolTipText = MemoryDispatch.ResolvedAddress;
+                    ValuesGrid[2, MemoryDispatch.Row].Value = GetDisplayForByteArray(MemoryDispatch.Value, MemoryDispatch.Type);
+                }
             }
         }
 
@@ -308,7 +310,7 @@ namespace NTRDebuggerTool.Forms
             return GetSearchMemorySize(ThreadEventDispatcher.CurrentSelectedDataType);
         }
 
-        private uint GetSearchMemorySize(DataTypeExact DataType)
+        internal uint GetSearchMemorySize(DataTypeExact DataType)
         {
             switch (DataType)
             {
@@ -386,9 +388,7 @@ namespace NTRDebuggerTool.Forms
         {
             if (e.RowIndex >= 0 && e.ColumnIndex == 2)
             {
-                Pointers.Clear();
                 SetMemory(e.RowIndex);
-                Pointers.Clear();
             }
         }
 
@@ -396,152 +396,37 @@ namespace NTRDebuggerTool.Forms
         {
             string TextAddress = (string)ValuesGrid[1, RowIndex].Value;
 
-            uint Address;
+            MemoryDispatch MemoryDispatch = new MemoryDispatch();
+            MemoryDispatch.Row = RowIndex;
+            MemoryDispatch.TextAddress = TextAddress;
+            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value);
+            MemoryDispatch.Value = GetByteArrayForDataType(MemoryDispatch.Type, (string)ValuesGrid[2, RowIndex].Value);
 
-            if (HexRegex.IsMatch(TextAddress))
-            {
-                Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString((string)ValuesGrid[1, RowIndex].Value).Reverse().ToArray(), 0); ;
-            }
-            else
-            {
-                Match TopMatch = ParserRegex.Match(TextAddress);
-
-                if (!TopMatch.Success)
-                {
-                    return;
-                }
-
-                Address = ResolvePointer(TopMatch);
-            }
-
-            if (IsValidMemoryAddress(Address) && !LoadAddresses)
-            {
-                ValuesGrid[1, RowIndex].ToolTipText = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
-                uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0);
-                switch (DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value))
-                {
-                    case DataTypeExact.Bytes1: //1 Byte
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            (byte)uint.Parse((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Bytes2: //2 Bytes
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            ushort.Parse((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Bytes4: //4 Bytes
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            uint.Parse((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Bytes8: //8 Bytes
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            ulong.Parse((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Float: //Float
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            float.Parse((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Double: //Double
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            double.Parse((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Raw: //Raw Bytes
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            Utilities.GetByteArrayFromByteString((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                    case DataTypeExact.Text: //Raw Bytes
-                        NTRConnection.SendWriteMemoryPacket(
-                            ProcessID,
-                            Address,
-                            System.Text.Encoding.Default.GetBytes((string)ValuesGrid[2, RowIndex].Value));
-                        break;
-                }
-            }
+            ThreadEventDispatcher.WriteAddress.Enqueue(MemoryDispatch);
         }
 
-        private uint ResolvePointer(Match Match)
+        private byte[] GetByteArrayForDataType(DataTypeExact DataType, string Value)
         {
-            string AddressString = Match.Groups["Address"].Value;
-            string OffsetString = Match.Groups["Offset"].Value;
-
-
-            uint Address;
-
-            Match RecurseMatch = ParserRegex.Match(AddressString);
-
-            if (RecurseMatch.Success)
+            switch (DataType)
             {
-                Address = ResolvePointer(RecurseMatch);
+                case DataTypeExact.Bytes1: //1 Byte
+                    return new byte[] { (byte)uint.Parse(Value) };
+                case DataTypeExact.Bytes2: //2 Bytes
+                    return BitConverter.GetBytes(ushort.Parse(Value));
+                case DataTypeExact.Bytes4: //4 Bytes
+                    return BitConverter.GetBytes(uint.Parse(Value));
+                case DataTypeExact.Bytes8: //8 Bytes
+                    return BitConverter.GetBytes(ulong.Parse(Value));
+                case DataTypeExact.Float: //Float
+                    return BitConverter.GetBytes(float.Parse(Value));
+                case DataTypeExact.Double: //Double
+                    return BitConverter.GetBytes(double.Parse(Value));
+                case DataTypeExact.Raw: //Raw Bytes
+                    return Utilities.GetByteArrayFromByteString(Value);
+                case DataTypeExact.Text: //Raw Bytes
+                default:
+                    return System.Text.Encoding.Default.GetBytes(Value);
             }
-            else
-            {
-                uint Pointer = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(AddressString).Reverse().ToArray(), 0);
-                if (!Pointers.ContainsKey(Pointer))
-                {
-                    byte[] Data = GetMemoryAtAddress(Processes.Text.Split('|')[0], AddressString, DataTypeExact.Bytes4);
-
-                    Address = BitConverter.ToUInt32(Data, 0);
-                    Pointers[Pointer] = Address;
-                }
-                else if (!IsValidMemoryAddress(Pointer))
-                {
-                    return 0;
-                }
-                else
-                {
-                    Address = Pointers[Pointer];
-                }
-            }
-
-            if (Address != 0 && !string.IsNullOrWhiteSpace(OffsetString))
-            {
-                OffsetString = OffsetString.Replace("[", "").Replace("]", "");
-                Address += BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(OffsetString.PadLeft(8, '0')).Reverse().ToArray(), 0);
-            }
-
-            return Address;
-        }
-
-        private byte[] GetMemoryAtAddress(string ProcessID, string Address, DataTypeExact DataType)
-        {
-            return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0), DataType);
-        }
-
-        private byte[] GetMemoryAtAddress(uint ProcessID, string Address, DataTypeExact DataType)
-        {
-            return GetMemoryAtAddress(ProcessID, BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Address).Reverse().ToArray(), 0), DataType);
-        }
-
-        private byte[] GetMemoryAtAddress(string ProcessID, uint Address, DataTypeExact DataType)
-        {
-            return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), Address, DataType);
-        }
-
-        private byte[] GetMemoryAtAddress(uint ProcessID, uint Address, DataTypeExact DataType)
-        {
-            SearchCriteria Criteria = new SearchCriteria();
-            Criteria.ProcessID = ProcessID;
-            Criteria.DataType = DataType;
-            Criteria.StartAddress = Address;
-            Criteria.Length = Criteria.Size = GetSearchMemorySize(DataType);
-            Criteria.SearchType = SearchTypeBase.Unknown;
-            Criteria.SearchValue = new byte[] { 0 };
-            NTRConnection.SearchCriteria.Add(Criteria);
-            NTRConnection.SendReadMemoryPacket(Criteria);
-            return Criteria.AddressesFound.Values.First();
         }
 
         private void ValuesGrid_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -629,73 +514,66 @@ namespace NTRDebuggerTool.Forms
 
         private void SaveButton_Click(object sender, EventArgs e)
         {
-            List<String> addr = new List<String>(); // 1
-            List<int> type = new List<int>(); // 3
-
+            SaveManager sm = new SaveManager();
+            sm.Init();
             // Get a list of all saved addresses
             foreach (DataGridViewRow row in ValuesGrid.Rows)
             {
-                addr.Add(row.Cells[1].Value.ToString());
-                type.Add(
-                    (int)DataTypeExactTool.GetValue(row.Cells[3].Value.ToString())
-                );
+                if (row.Cells[1].Value is GateSharkCode)
+                {
+                    // @TODO This will be different.
+                }
+                else
+                {
+                    sm.codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[3].Value.ToString()), row.Cells[1].Value.ToString()));
+                }
             }
 
             // Set the values
-            SaveManager sm = new SaveManager();
-            sm.addr = addr.ToArray();
-            sm.type = type.ToArray();
-            String[] parts_ = Processes.Text?.Split('|');
+            String[] parts_ = Processes.Text.Split('|');
             if (parts_.Length < 2) return;
-            String game = parts_?[1] + @".xml";
+            String game = Config.ConfigFileDirectory + Path.DirectorySeparatorChar + parts_[1] + @".xml";
+            sm.titleId = parts_[1];
             SaveManager.SaveToXml(game, sm);
             MessageBox.Show(@"Saved selected addresses to '" + game + "'");
         }
 
         private void LoadButton_Click(object sender, EventArgs e)
         {
-            String[] parts_ = Processes.Text?.Split('|');
+            String[] parts_ = Processes.Text.Split('|');
             if (parts_.Length < 2) return;
-            String game = parts_?[1] + @".xml";
+            String game = Config.ConfigFileDirectory + Path.DirectorySeparatorChar + parts_[1] + @".xml";
             SaveManager sm = SaveManager.LoadFromXml(game);
-            sm.Init();
-            String[] addr = sm.addr;
-            int[] type = sm.type;
-            if (addr.Length != type.Length)
+            if (sm.titleId != parts_[1])
             {
-                MessageBox.Show(@"Invalid size of the savefile");
-            } else if (addr.Length == 0 || type.Length == 0)
+                MessageBox.Show(@"Filename/TitleID Mismatch.");
+            }
+            else
             {
-                MessageBox.Show(@"No addresses found");
-            } else
-            {
-                LoadAddresses = true;
-
-                for (int i = 0; i < addr.Length; i++)
+                foreach (SaveCode code in sm.codes)
                 {
-
-                    if (!IsInValues(addr[i]))
+                    if (!IsInValues(code.address))
                     {
                         int RowIndex = ValuesGrid.Rows.Add();
                         ValuesGrid[0, RowIndex].Value = null;
-                        ValuesGrid[3, RowIndex].Value = DataTypeExactTool.GetValues()[type[i] - 1];
-                        ValuesGrid[1, RowIndex].Value = addr[i];
+                        ValuesGrid[3, RowIndex].Value = DataTypeExactTool.GetKey(code.type);
+                        ValuesGrid[1, RowIndex].Value = code.address;
 
                         // Read the memory
-
-
-                        DataTypeExact DataType = DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value);
-
-                        byte[] Value = GetMemoryAtAddress(Processes.Text.Split('|')[0], (string) ValuesGrid[1, RowIndex].Value, DataType);
-
-                        ValuesGrid[2, RowIndex].Value = GetDisplayForByteArray(Value, DataType);
+                        RefreshMemory(RowIndex);
                     }
-
                 }
-                LoadAddresses = false;
-
-
             }
+        }
+
+        private void RefreshMemory(int RowIndex)
+        {
+            ThreadEventDispatcher.CurrentSelectedProcess = Processes.Text.Split('|')[0];
+            MemoryDispatch MemoryDispatch = new MemoryDispatch();
+            MemoryDispatch.Row = RowIndex;
+            MemoryDispatch.TextAddress = (string)ValuesGrid[1, RowIndex].Value;
+            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value);
+            ThreadEventDispatcher.RefreshValueAddresses.Enqueue(MemoryDispatch);
         }
 
         private void ComboSearchType_SelectedValueChanged(object sender, EventArgs e)
@@ -822,37 +700,7 @@ namespace NTRDebuggerTool.Forms
                 case "ValuesGridRefreshItem":
                     foreach (DataGridViewCell Cell in ValuesGrid.SelectedCells)
                     {
-                        string TextAddress = (string)Cell.OwningRow.Cells[1].Value;
-                        uint Address;
-
-                        if (HexRegex.IsMatch(TextAddress))
-                        {
-                            Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(TextAddress).Reverse().ToArray(), 0); ;
-                        }
-                        else
-                        {
-                            Match TopMatch = ParserRegex.Match(TextAddress);
-
-                            if (!TopMatch.Success)
-                            {
-                                return;
-                            }
-
-                            Pointers.Clear();
-                            Address = ResolvePointer(TopMatch);
-                            Pointers.Clear();
-                        }
-
-                        if (!IsValidMemoryAddress(Address) || Cell.OwningRow.Cells[3].Value == null)
-                        {
-                            continue;
-                        }
-
-                        DataTypeExact DataType = DataTypeExactTool.GetValue((string)Cell.OwningRow.Cells[3].Value);
-
-                        byte[] Value = GetMemoryAtAddress(Processes.Text.Split('|')[0], Address, DataType);
-
-                        Cell.OwningRow.Cells[2].Value = GetDisplayForByteArray(Value, DataType);
+                        RefreshMemory(Cell.RowIndex);
                     }
                     break;
             }
@@ -885,7 +733,7 @@ namespace NTRDebuggerTool.Forms
             return Address;
         }
 
-        private bool IsValidMemoryAddress(uint Address)
+        internal bool IsValidMemoryAddress(uint Address)
         {
             return GetAddressSpaceForAddress(Address) != null;
         }
