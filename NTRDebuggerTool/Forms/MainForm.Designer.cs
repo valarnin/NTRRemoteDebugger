@@ -48,6 +48,8 @@
             this.ValuesGridAddItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridDeleteItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridConvertCode = new System.Windows.Forms.ToolStripMenuItem();
+            this.ValuesGridPointerSearch = new System.Windows.Forms.ToolStripMenuItem();
+            this.ValuesGridCopyResolvedAddress = new System.Windows.Forms.ToolStripMenuItem();
             this.LabelIPPort = new System.Windows.Forms.Label();
             this.LabelProcess = new System.Windows.Forms.Label();
             this.LabelMemoryRange = new System.Windows.Forms.Label();
@@ -77,8 +79,8 @@
             this.LabelDash = new System.Windows.Forms.Label();
             this.ButtonConfig = new System.Windows.Forms.Button();
             this.LabelButtonState = new System.Windows.Forms.Label();
-            this.ValuesGridPointerSearch = new System.Windows.Forms.ToolStripMenuItem();
-            this.ValuesGridCopyResolvedAddress = new System.Windows.Forms.ToolStripMenuItem();
+            this.SaveButton = new System.Windows.Forms.Button();
+            this.LoadButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -271,6 +273,18 @@
             this.ValuesGridConvertCode.Name = "ValuesGridConvertCode";
             this.ValuesGridConvertCode.Size = new System.Drawing.Size(197, 22);
             this.ValuesGridConvertCode.Text = "Convert AR3DS Code";
+            // 
+            // ValuesGridPointerSearch
+            // 
+            this.ValuesGridPointerSearch.Name = "ValuesGridPointerSearch";
+            this.ValuesGridPointerSearch.Size = new System.Drawing.Size(197, 22);
+            this.ValuesGridPointerSearch.Text = "Pointer Scan";
+            // 
+            // ValuesGridCopyResolvedAddress
+            // 
+            this.ValuesGridCopyResolvedAddress.Name = "ValuesGridCopyResolvedAddress";
+            this.ValuesGridCopyResolvedAddress.Size = new System.Drawing.Size(197, 22);
+            this.ValuesGridCopyResolvedAddress.Text = "Copy Resolved Address";
             // 
             // LabelIPPort
             // 
@@ -550,23 +564,35 @@
             this.LabelButtonState.Size = new System.Drawing.Size(280, 15);
             this.LabelButtonState.TabIndex = 41;
             // 
-            // ValuesGridPointerSearch
+            // SaveButton
             // 
-            this.ValuesGridPointerSearch.Name = "ValuesGridPointerSearch";
-            this.ValuesGridPointerSearch.Size = new System.Drawing.Size(197, 22);
-            this.ValuesGridPointerSearch.Text = "Pointer Scan";
+            this.SaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.SaveButton.Location = new System.Drawing.Point(398, 160);
+            this.SaveButton.Name = "SaveButton";
+            this.SaveButton.Size = new System.Drawing.Size(73, 23);
+            this.SaveButton.TabIndex = 42;
+            this.SaveButton.Text = "Save";
+            this.SaveButton.UseVisualStyleBackColor = true;
+            this.SaveButton.Click += new System.EventHandler(this.SaveButton_Click);
             // 
-            // ValuesGridCopyResolvedAddress
+            // LoadButton
             // 
-            this.ValuesGridCopyResolvedAddress.Name = "ValuesGridCopyResolvedAddress";
-            this.ValuesGridCopyResolvedAddress.Size = new System.Drawing.Size(197, 22);
-            this.ValuesGridCopyResolvedAddress.Text = "Copy Resolved Address";
+            this.LoadButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.LoadButton.Location = new System.Drawing.Point(477, 159);
+            this.LoadButton.Name = "LoadButton";
+            this.LoadButton.Size = new System.Drawing.Size(73, 23);
+            this.LoadButton.TabIndex = 43;
+            this.LoadButton.Text = "Load";
+            this.LoadButton.UseVisualStyleBackColor = true;
+            this.LoadButton.Click += new System.EventHandler(this.LoadButton_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.LoadButton);
+            this.Controls.Add(this.SaveButton);
             this.Controls.Add(this.LabelButtonState);
             this.Controls.Add(this.ButtonConfig);
             this.Controls.Add(this.LabelEndAddress);
@@ -670,5 +696,7 @@
         private System.Windows.Forms.ToolStripMenuItem ValuesGridRefreshItem;
         private System.Windows.Forms.ToolStripMenuItem ValuesGridPointerSearch;
         private System.Windows.Forms.ToolStripMenuItem ValuesGridCopyResolvedAddress;
+        private System.Windows.Forms.Button SaveButton;
+        private System.Windows.Forms.Button LoadButton;
     }
 }

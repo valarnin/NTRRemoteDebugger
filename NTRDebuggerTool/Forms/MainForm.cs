@@ -37,6 +37,8 @@ namespace NTRDebuggerTool.Forms
 
         internal bool FormEnabled = true;
 
+        private bool LoadAddresses = false;
+
         private Thread EventDispatcherThread;
         private Thread ButtonStateThread;
 
@@ -94,6 +96,8 @@ namespace NTRDebuggerTool.Forms
             this.ButtonRefreshMemoryRange.Enabled = !NTRConnection.LockControls && this.ControlEnabledButtonRefreshMemoryRange;
             this.IP.Enabled = !NTRConnection.LockControls && this.ControlEnabledIP;
             this.MemoryRange.Enabled = !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
+            this.SaveButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
+            this.LoadButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
             this.Port.Enabled = !NTRConnection.LockControls && this.ControlEnabledPort;
             this.Processes.Enabled = !NTRConnection.LockControls && this.ControlEnabledProcesses;
             this.ResetButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledResetButton;
@@ -106,6 +110,7 @@ namespace NTRDebuggerTool.Forms
             this.ValuesGrid.Enabled = !NTRConnection.LockControls && this.ControlEnabledValuesGrid;
             this.MemoryStart.Enabled = !NTRConnection.LockControls && this.ControlEnabledStart;
             this.MemorySize.Enabled = !NTRConnection.LockControls && this.ControlEnabledSize;
+
         }
 
         internal void SetConnectedControls(bool Enabled)
@@ -409,7 +414,7 @@ namespace NTRDebuggerTool.Forms
                 Address = ResolvePointer(TopMatch);
             }
 
-            if (IsValidMemoryAddress(Address))
+            if (IsValidMemoryAddress(Address) && !LoadAddresses)
             {
                 ValuesGrid[1, RowIndex].ToolTipText = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
                 uint ProcessID = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Processes.Text.Split('|')[0]), 0);
@@ -593,6 +598,8 @@ namespace NTRDebuggerTool.Forms
             ButtonOpenProcess.Enabled = ControlEnabledButtonOpenProcess = false;
             ThreadEventDispatcher.CurrentSelectedProcess = Processes.Text;
             ThreadEventDispatcher.DispatchOpenProcess = true;
+            SaveButton.Enabled = true;
+            LoadButton.Enabled = true;
         }
 
         private void ButtonRefreshMemoryRange_Click(object sender, EventArgs e)
@@ -618,6 +625,77 @@ namespace NTRDebuggerTool.Forms
             ThreadEventDispatcher.CurrentSelectedSearchType = SearchTypeBaseTool.GetValue(ComboSearchType.SelectedItem.ToString());
             ThreadEventDispatcher.CurrentMemoryRange = this.MemoryRange.Text;
             ThreadEventDispatcher.DispatchSearch = true;
+        }
+
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            List<String> addr = new List<String>(); // 1
+            List<int> type = new List<int>(); // 3
+
+            // Get a list of all saved addresses
+            foreach (DataGridViewRow row in ValuesGrid.Rows)
+            {
+                addr.Add(row.Cells[1].Value.ToString());
+                type.Add(
+                    (int)DataTypeExactTool.GetValue(row.Cells[3].Value.ToString())
+                );
+            }
+
+            // Set the values
+            SaveManager sm = new SaveManager();
+            sm.addr = addr.ToArray();
+            sm.type = type.ToArray();
+            String[] parts_ = Processes.Text?.Split('|');
+            if (parts_.Length < 2) return;
+            String game = parts_?[1] + @".xml";
+            SaveManager.SaveToXml(game, sm);
+            MessageBox.Show(@"Saved selected addresses to '" + game + "'");
+        }
+
+        private void LoadButton_Click(object sender, EventArgs e)
+        {
+            String[] parts_ = Processes.Text?.Split('|');
+            if (parts_.Length < 2) return;
+            String game = parts_?[1] + @".xml";
+            SaveManager sm = SaveManager.LoadFromXml(game);
+            sm.Init();
+            String[] addr = sm.addr;
+            int[] type = sm.type;
+            if (addr.Length != type.Length)
+            {
+                MessageBox.Show(@"Invalid size of the savefile");
+            } else if (addr.Length == 0 || type.Length == 0)
+            {
+                MessageBox.Show(@"No addresses found");
+            } else
+            {
+                LoadAddresses = true;
+
+                for (int i = 0; i < addr.Length; i++)
+                {
+
+                    if (!IsInValues(addr[i]))
+                    {
+                        int RowIndex = ValuesGrid.Rows.Add();
+                        ValuesGrid[0, RowIndex].Value = null;
+                        ValuesGrid[3, RowIndex].Value = DataTypeExactTool.GetValues()[type[i] - 1];
+                        ValuesGrid[1, RowIndex].Value = addr[i];
+
+                        // Read the memory
+
+
+                        DataTypeExact DataType = DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value);
+
+                        byte[] Value = GetMemoryAtAddress(Processes.Text.Split('|')[0], (string) ValuesGrid[1, RowIndex].Value, DataType);
+
+                        ValuesGrid[2, RowIndex].Value = GetDisplayForByteArray(Value, DataType);
+                    }
+
+                }
+                LoadAddresses = false;
+
+
+            }
         }
 
         private void ComboSearchType_SelectedValueChanged(object sender, EventArgs e)
@@ -861,6 +939,5 @@ namespace NTRDebuggerTool.Forms
                 TextEndAddress.Text = "";
             }
         }
-
     }
 }

@@ -69,6 +69,7 @@
       <DependentUpon>PointerScanDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Objects\GateSharkCode.cs" />
+    <Compile Include="Objects\SaveManager.cs" />
     <Compile Include="Objects\SearchCriteria.cs" />
     <Compile Include="Remote\NTRPacketReceiverThread.cs" />
     <Compile Include="Remote\NTRRemoteConnection.cs" />
