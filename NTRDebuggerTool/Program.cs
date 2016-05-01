@@ -36,40 +36,48 @@ namespace NTRDebuggerTool
         [STAThread]
         static void Main(string[] args)
         {
-            if (DEBUG || (args.Length > 0 && args[0].Equals("-c")))
-            {
-                ConsoleHelper.EnableConsole();
-            }
             try
             {
-                File.Open(Path.GetTempPath() + "3dsreleases.xml", FileMode.Open).Close();
-            }
-            catch (FileNotFoundException ex)
-            {
+                if (DEBUG || (args.Length > 0 && args[0].Equals("-c")))
+                {
+                    ConsoleHelper.EnableConsole();
+                }
                 try
                 {
-                    using (WebClient client = new WebClient())
+                    File.Open(Path.GetTempPath() + "3dsreleases.xml", FileMode.Open).Close();
+                }
+                catch (FileNotFoundException ex)
+                {
+                    try
                     {
-                        client.DownloadFile("http://3dsdb.com/xml.php", Path.GetTempPath() + "3dsreleases.xml");
+                        using (WebClient client = new WebClient())
+                        {
+                            client.DownloadFile("http://3dsdb.com/xml.php", Path.GetTempPath() + "3dsreleases.xml");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, ex);
+                        log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, e);
                     }
                 }
-                catch (Exception e)
+
+                //Debug code
+                if (!DEBUG)
                 {
-                    log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, ex);
-                    log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, e);
+                    Application.EnableVisualStyles();
+                    Application.SetCompatibleTextRenderingDefault(false);
+                    Application.Run(new MainForm(new NTRRemoteConnection()));
+                }
+                else
+                {
+                    Debug.Execute();
                 }
             }
-
-            //Debug code
-            if (!DEBUG)
+            catch (Exception ex)
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new MainForm(new NTRRemoteConnection()));
-            }
-            else
-            {
-                Debug.Execute();
+                log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, ex);
+                MessageBox.Show("An exception has occurred. Check the log file at " + System.IO.Path.GetTempPath() + System.IO.Path.DirectorySeparatorChar + "NTRDebuggerTool-Log.txt");
             }
         }
     }

@@ -73,8 +73,30 @@ namespace NTRDebuggerTool.Forms
                 {
                     MemoryDispatch Row = new MemoryDispatch();
                     RefreshValueAddresses.TryDequeue(out Row);
-                    Row.Value = GetMemoryAtAddress(CurrentSelectedProcess, Row.TextAddress, Row.Type);
-                    RefreshValueReturn.Enqueue(Row);
+                    uint Address;
+
+                    if (HexRegex.IsMatch(Row.TextAddress))
+                    {
+                        Address = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Row.TextAddress).Reverse().ToArray(), 0); ;
+                    }
+                    else
+                    {
+                        Match TopMatch = ParserRegex.Match(Row.TextAddress);
+
+                        if (!TopMatch.Success)
+                        {
+                            return;
+                        }
+
+                        Address = ResolvePointer(TopMatch);
+                    }
+
+                    if (Form.IsValidMemoryAddress(Address))
+                    {
+                        Row.ResolvedAddress = Utilities.GetStringFromByteArray(BitConverter.GetBytes(Address).Reverse().ToArray());
+                        Row.Value = GetMemoryAtAddress(CurrentSelectedProcess, Address, Row.Type);
+                        RefreshValueReturn.Enqueue(Row);
+                    }
                 }
                 while (WriteAddress.Count > 0)
                 {
