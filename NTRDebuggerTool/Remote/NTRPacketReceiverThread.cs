@@ -1,7 +1,6 @@
 ﻿using NTRDebuggerTool.Forms.FormEnums;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Xml;
@@ -322,25 +321,26 @@ namespace NTRDebuggerTool.Remote
                     {
                         return false;
                     }
+                    return IsIncreasedBy(RealAddress, RemoteValue);
                     return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) == BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].SearchValue, 0);
                 case SearchTypeBase.DecreasedBy:
                     if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(RemoteValue).CompareTo(GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress])) == BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    return IsDecreasedBy(RealAddress, RemoteValue);
                 case SearchTypeBase.Increased:
                     if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) > 0;
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) < 0;
                 case SearchTypeBase.Decreased:
                     if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
                         return false;
                     }
-                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) < 0;
+                    return GetValueFromByteArray(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress]).CompareTo(GetValueFromByteArray(RemoteValue)) > 0;
                 case SearchTypeBase.Same:
                     if (!NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(RealAddress))
                     {
@@ -358,8 +358,6 @@ namespace NTRDebuggerTool.Remote
                 default:
                     throw new InvalidOperationException("Invalid search type " + NTRConnection.SearchCriteria[0].SearchType.ToString() + " passed to NTRPacketReceiverThread.CheckCriteria");
             }
-
-
         }
 
         private IComparable GetValueFromByteArray(byte[] Value)
@@ -380,6 +378,99 @@ namespace NTRDebuggerTool.Remote
                     return BitConverter.ToDouble(Value, 0);
                 default:
                     throw new InvalidOperationException("Invalid data type " + NTRConnection.SearchCriteria[0].DataType.ToString() + " passed to NTRPacketReceiverThread.GetValueFromByteArray");
+            }
+        }
+
+        private bool IsIncreasedBy(uint RealAddress, byte[] RemoteValue)
+        {
+            checked
+            {
+                switch (NTRConnection.SearchCriteria[0].DataType)
+                {
+                    case DataTypeExact.Bytes1:
+                        return NTRConnection.SearchCriteria[0].AddressesFound[RealAddress][0] ==
+                            RemoteValue[0] - NTRConnection.SearchCriteria[0].SearchValue[0];
+                    case DataTypeExact.Bytes2:
+                        return BitConverter.ToUInt16(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0) ==
+                            BitConverter.ToUInt16(RemoteValue, 0) - BitConverter.ToUInt16(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    case DataTypeExact.Bytes4:
+                        return BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0) ==
+                            BitConverter.ToUInt32(RemoteValue, 0) - BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    case DataTypeExact.Bytes8:
+                        return BitConverter.ToUInt64(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0) ==
+                            BitConverter.ToUInt64(RemoteValue, 0) - BitConverter.ToUInt64(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    case DataTypeExact.Float:
+                        return IsLessThan(BitConverter.ToSingle(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0),
+                            BitConverter.ToSingle(RemoteValue, 0) + BitConverter.ToSingle(NTRConnection.SearchCriteria[0].SearchValue, 0));
+                    case DataTypeExact.Double:
+                        return IsLessThan(BitConverter.ToDouble(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0),
+                            BitConverter.ToDouble(RemoteValue, 0) + BitConverter.ToDouble(NTRConnection.SearchCriteria[0].SearchValue, 0));
+                    default:
+                        throw new InvalidOperationException("Invalid data type " + NTRConnection.SearchCriteria[0].DataType.ToString() + " passed to NTRPacketReceiverThread.GetValueFromByteArray");
+                }
+            }
+        }
+
+        private bool IsDecreasedBy(uint RealAddress, byte[] RemoteValue)
+        {
+            checked
+            {
+                switch (NTRConnection.SearchCriteria[0].DataType)
+                {
+                    case DataTypeExact.Bytes1:
+                        return NTRConnection.SearchCriteria[0].AddressesFound[RealAddress][0] ==
+                            RemoteValue[0] + NTRConnection.SearchCriteria[0].SearchValue[0];
+                    case DataTypeExact.Bytes2:
+                        return BitConverter.ToUInt16(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0) ==
+                            BitConverter.ToUInt16(RemoteValue, 0) + BitConverter.ToUInt16(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    case DataTypeExact.Bytes4:
+                        return BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0) ==
+                            BitConverter.ToUInt32(RemoteValue, 0) + BitConverter.ToUInt32(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    case DataTypeExact.Bytes8:
+                        return BitConverter.ToUInt64(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0) ==
+                            BitConverter.ToUInt64(RemoteValue, 0) + BitConverter.ToUInt64(NTRConnection.SearchCriteria[0].SearchValue, 0);
+                    case DataTypeExact.Float:
+                        return IsGreaterThan(BitConverter.ToSingle(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0),
+                            BitConverter.ToSingle(RemoteValue, 0) + BitConverter.ToSingle(NTRConnection.SearchCriteria[0].SearchValue, 0));
+                    case DataTypeExact.Double:
+                        return IsGreaterThan(BitConverter.ToDouble(NTRConnection.SearchCriteria[0].AddressesFound[RealAddress], 0),
+                            BitConverter.ToDouble(RemoteValue, 0) + BitConverter.ToDouble(NTRConnection.SearchCriteria[0].SearchValue, 0));
+                    default:
+                        throw new InvalidOperationException("Invalid data type " + NTRConnection.SearchCriteria[0].DataType.ToString() + " passed to NTRPacketReceiverThread.GetValueFromByteArray");
+                }
+            }
+        }
+
+        #endregion
+
+        #region Handle comparison of precision numbers (float, double)
+
+        private bool IsLessThan(float Left, float Right)
+        {
+            checked
+            {
+                return Left < Right + float.Epsilon;
+            }
+        }
+        private bool IsGreaterThan(float Left, float Right)
+        {
+            checked
+            {
+                return Left + float.Epsilon > Right;
+            }
+        }
+        private bool IsLessThan(double Left, double Right)
+        {
+            checked
+            {
+                return Left < Right + double.Epsilon;
+            }
+        }
+        private bool IsGreaterThan(double Left, double Right)
+        {
+            checked
+            {
+                return Left + double.Epsilon > Right;
             }
         }
 

@@ -78,6 +78,7 @@ namespace NTRDebuggerTool
             {
                 log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, ex);
                 MessageBox.Show("An exception has occurred. Check the log file at " + System.IO.Path.GetTempPath() + System.IO.Path.DirectorySeparatorChar + "NTRDebuggerTool-Log.txt");
+                Application.Exit();
             }
         }
     }
