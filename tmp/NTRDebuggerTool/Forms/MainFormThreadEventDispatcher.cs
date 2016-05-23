@@ -16,13 +16,10 @@ namespace NTRDebuggerTool.Forms
         internal bool DispatchOpenProcess = false;
         internal bool DispatchSearch = false;
         internal bool DispatchConfig = false;
-        internal bool DispatchImport = false;
         internal string DispatchPointerSearch = null;
         public ConcurrentQueue<MemoryDispatch> RefreshValueAddresses = new ConcurrentQueue<MemoryDispatch>(),
         RefreshValueReturn = new ConcurrentQueue<MemoryDispatch>(),
         WriteAddress = new ConcurrentQueue<MemoryDispatch>();
-
-        internal GateShark ImportedCode = null;
 
         internal string CurrentSelectedProcess = "";
         internal string CurrentMemoryRange = "";
@@ -65,11 +62,6 @@ namespace NTRDebuggerTool.Forms
                 {
                     DispatchConfig = false;
                     DoConfig();
-                }
-                if (DispatchImport)
-                {
-                    DispatchImport = false;
-                    DoImport();
                 }
                 if (DispatchPointerSearch != null)
                 {
@@ -155,16 +147,6 @@ namespace NTRDebuggerTool.Forms
             Form.FormEnabled = false;
             ConfigDialog Dialog = new ConfigDialog(Form);
             Dialog.ShowDialog();
-            Dialog.Dispose();
-            Form.FormEnabled = true;
-        }
-
-        private void DoImport()
-        {
-            Form.FormEnabled = false;
-            GateSharkImportDialog Dialog = new GateSharkImportDialog(Form);
-            Dialog.ShowDialog();
-            ImportedCode = Dialog.code;
             Dialog.Dispose();
             Form.FormEnabled = true;
         }

@@ -16,7 +16,7 @@ namespace NTRDebuggerTool.Objects
         {
             operation = new GateSharkCodeOperation();
             operation.operationType = OperationType.TopLevelOperation;
-            operation.ParseCode(code, this);
+            operation.ParseCode(code);
         }
 
         private class GateSharkCodeOperation
@@ -26,14 +26,10 @@ namespace NTRDebuggerTool.Objects
 
             private uint leftCode, rightCode;
 
-            public void ParseCode(string code, GateSharkCode topCode)
+            public string ParseCode(string code)
             {
                 string[] codeLines = code.Split(new string[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
-                ParseCode(codeLines, 0, topCode);
-            }
-            private int ParseCode(string[] codeLines, int i, GateSharkCode topCode)
-            {
-                for (; i < codeLines.Length; ++i)
+                for (int i = 0; i < codeLines.Length; ++i)
                 {
                     string[] lineParts = codeLines[i].Split(' ');
 
@@ -62,36 +58,12 @@ namespace NTRDebuggerTool.Objects
                         case OperationType.ConditionalEqual2Byte:
                         case OperationType.ConditionalNotEqual2Byte:
                         case OperationType.ButtonStateRequire:
-                            i = operation.ParseCode(codeLines, ++i, topCode);
                             break;
                         case OperationType.WriteRange:
                             break;
-                        case OperationType.EndConditional:
-                            switch (this.operationType)
-                            {
-                                case OperationType.ConditionalGreaterThan4Byte:
-                                case OperationType.ConditionalLessThan4Byte:
-                                case OperationType.ConditionalEqual4Byte:
-                                case OperationType.ConditionalNotEqual4Byte:
-                                case OperationType.ConditionalGreaterThan2Byte:
-                                case OperationType.ConditionalLessThan2Byte:
-                                case OperationType.ConditionalEqual2Byte:
-                                case OperationType.ConditionalNotEqual2Byte:
-                                    return i;
-                            }
-                            break;
-                        case OperationType.EndRepeat:
-                            if (this.operationType == OperationType.WriteRange)
-                            {
-                                return i;
-                            }
-                            break;
-                        case OperationType.ResetState:
-
-                            return i;
                     }
                 }
-                return i;
+                return null;
             }
         }
 

@@ -27,6 +27,8 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <StartupObject>NTRDebuggerTool.Program</StartupObject>
+    <CodePage>65001</CodePage>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -37,17 +39,22 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="Custom" />
+      </CustomCommands>
+    </CustomCommands>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>true</DebugSymbols>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -56,10 +63,13 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="log4net">
+      <HintPath>Resources\log4net.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config.cs" />
@@ -70,12 +80,6 @@
     </Compile>
     <Compile Include="Forms\ConfigDialog.Designer.cs">
       <DependentUpon>ConfigDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\GateSharkImportDialog.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\GateSharkImportDialog.Designer.cs">
-      <DependentUpon>GateSharkImportDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\FormEnums\DataType.cs" />
     <Compile Include="Forms\FormEnums\SearchType.cs" />
@@ -93,9 +97,7 @@
     <Compile Include="Forms\PointerScanDialog.Designer.cs">
       <DependentUpon>PointerScanDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Objects\GateShark.cs" />
     <Compile Include="Objects\GateSharkCode.cs" />
-    <Compile Include="Objects\Logger.cs" />
     <Compile Include="Objects\Saving\SaveCode.cs" />
     <Compile Include="Objects\Saving\SaveManager.cs" />
     <Compile Include="Objects\SearchCriteria.cs" />
@@ -109,9 +111,6 @@
     <Compile Include="Utilities.cs" />
     <EmbeddedResource Include="Forms\ConfigDialog.resx">
       <DependentUpon>ConfigDialog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\GateSharkImportDialog.resx">
-      <DependentUpon>GateSharkImportDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -164,6 +163,9 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\log4net.dll" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

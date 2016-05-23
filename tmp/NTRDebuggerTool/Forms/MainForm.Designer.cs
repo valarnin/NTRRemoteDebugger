@@ -81,7 +81,6 @@
             this.LabelButtonState = new System.Windows.Forms.Label();
             this.SaveButton = new System.Windows.Forms.Button();
             this.LoadButton = new System.Windows.Forms.Button();
-            this.ImportButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.ResultsGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ValuesGrid)).BeginInit();
             this.ValuesGridContextMenuStrip.SuspendLayout();
@@ -159,9 +158,9 @@
             // SearchButton
             // 
             this.SearchButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.SearchButton.Location = new System.Drawing.Point(626, 159);
+            this.SearchButton.Location = new System.Drawing.Point(620, 159);
             this.SearchButton.Name = "SearchButton";
-            this.SearchButton.Size = new System.Drawing.Size(70, 23);
+            this.SearchButton.Size = new System.Drawing.Size(73, 23);
             this.SearchButton.TabIndex = 9;
             this.SearchButton.Text = "Search";
             this.SearchButton.UseVisualStyleBackColor = true;
@@ -170,9 +169,9 @@
             // ResetButton
             // 
             this.ResetButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.ResetButton.Location = new System.Drawing.Point(702, 159);
+            this.ResetButton.Location = new System.Drawing.Point(699, 159);
             this.ResetButton.Name = "ResetButton";
-            this.ResetButton.Size = new System.Drawing.Size(70, 23);
+            this.ResetButton.Size = new System.Drawing.Size(73, 23);
             this.ResetButton.TabIndex = 10;
             this.ResetButton.Text = "Reset";
             this.ResetButton.UseVisualStyleBackColor = true;
@@ -568,9 +567,9 @@
             // SaveButton
             // 
             this.SaveButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.SaveButton.Location = new System.Drawing.Point(398, 159);
+            this.SaveButton.Location = new System.Drawing.Point(398, 160);
             this.SaveButton.Name = "SaveButton";
-            this.SaveButton.Size = new System.Drawing.Size(70, 23);
+            this.SaveButton.Size = new System.Drawing.Size(73, 23);
             this.SaveButton.TabIndex = 42;
             this.SaveButton.Text = "Save";
             this.SaveButton.UseVisualStyleBackColor = true;
@@ -579,31 +578,19 @@
             // LoadButton
             // 
             this.LoadButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.LoadButton.Location = new System.Drawing.Point(474, 159);
+            this.LoadButton.Location = new System.Drawing.Point(477, 159);
             this.LoadButton.Name = "LoadButton";
-            this.LoadButton.Size = new System.Drawing.Size(70, 23);
+            this.LoadButton.Size = new System.Drawing.Size(73, 23);
             this.LoadButton.TabIndex = 43;
             this.LoadButton.Text = "Load";
             this.LoadButton.UseVisualStyleBackColor = true;
             this.LoadButton.Click += new System.EventHandler(this.LoadButton_Click);
-            // 
-            // ImportButton
-            // 
-            this.ImportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.ImportButton.Location = new System.Drawing.Point(550, 159);
-            this.ImportButton.Name = "ImportButton";
-            this.ImportButton.Size = new System.Drawing.Size(70, 23);
-            this.ImportButton.TabIndex = 44;
-            this.ImportButton.Text = "Import GS";
-            this.ImportButton.UseVisualStyleBackColor = true;
-            this.ImportButton.Click += new System.EventHandler(this.ImportButton_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
-            this.Controls.Add(this.ImportButton);
             this.Controls.Add(this.LoadButton);
             this.Controls.Add(this.SaveButton);
             this.Controls.Add(this.LabelButtonState);
@@ -711,6 +698,5 @@
         private System.Windows.Forms.ToolStripMenuItem ValuesGridCopyResolvedAddress;
         private System.Windows.Forms.Button SaveButton;
         private System.Windows.Forms.Button LoadButton;
-        private System.Windows.Forms.Button ImportButton;
     }
 }

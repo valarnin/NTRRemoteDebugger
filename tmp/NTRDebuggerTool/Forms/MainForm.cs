@@ -47,15 +47,13 @@ namespace NTRDebuggerTool.Forms
 
         internal NTRRemoteConnection NTRConnection;
 
-        internal MainFormThreadEventDispatcher ThreadEventDispatcher;
-        internal MainFormThreadButtonState ThreadButtonState;
+        private MainFormThreadEventDispatcher ThreadEventDispatcher;
+        private MainFormThreadButtonState ThreadButtonState;
         internal bool SearchComplete = false;
 
         internal SearchCriteria LastSearchCriteria;
 
         private Stopwatch LockValuesStopwatch = new Stopwatch();
-
-        private Dictionary<int, GateShark> GateSharkCodes = new Dictionary<int, GateShark>();
 
         public MainForm(NTRRemoteConnection NTRConnection)
         {
@@ -94,7 +92,6 @@ namespace NTRDebuggerTool.Forms
             this.MemoryRange.Enabled = !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
             this.SaveButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
             this.LoadButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
-            this.ImportButton.Enabled = false;// !NTRConnection.LockControls && this.ControlEnabledMemoryRange;
             this.Port.Enabled = !NTRConnection.LockControls && this.ControlEnabledPort;
             this.Processes.Enabled = !NTRConnection.LockControls && this.ControlEnabledProcesses;
             this.ResetButton.Enabled = !NTRConnection.LockControls && this.ControlEnabledResetButton;
@@ -256,14 +253,7 @@ namespace NTRDebuggerTool.Forms
                     {
                         if (ValuesGrid[0, i].Value is string)
                         {
-                            if (GateSharkCodes.ContainsKey(i))
-                            {
-                                GateSharkCodes[i].Execute();
-                            }
-                            else
-                            {
-                                SetMemory(i);
-                            }
+                            SetMemory(i);
                         }
                     }
                     LockValuesStopwatch.Restart();
@@ -284,17 +274,6 @@ namespace NTRDebuggerTool.Forms
                     ValuesGrid[1, MemoryDispatch.Row].ToolTipText = MemoryDispatch.ResolvedAddress;
                     ValuesGrid[2, MemoryDispatch.Row].Value = GetDisplayForByteArray(MemoryDispatch.Value, MemoryDispatch.Type);
                 }
-            }
-
-            if (ThreadEventDispatcher.ImportedCode != null)
-            {
-                int RowIndex = ValuesGrid.Rows.Add();
-                ValuesGrid[0, RowIndex].Value = null;
-                ValuesGrid[3, RowIndex].Value = "Raw";
-                ValuesGrid[1, RowIndex].Value = "GateShark";
-                ValuesGrid[2, RowIndex].Value = ThreadEventDispatcher.ImportedCode.ToString();
-                GateSharkCodes.Add(RowIndex, ThreadEventDispatcher.ImportedCode);
-                ThreadEventDispatcher.ImportedCode = null;
             }
         }
 
@@ -397,7 +376,7 @@ namespace NTRDebuggerTool.Forms
         {
             for (int i = 0; i < ValuesGrid.RowCount; ++i)
             {
-                if ((ValuesGrid[1, i].Value.ToString()) == Address)
+                if (((string)ValuesGrid[1, i].Value) == Address)
                 {
                     return true;
                 }
@@ -544,10 +523,6 @@ namespace NTRDebuggerTool.Forms
                 {
                     // @TODO This will be different.
                 }
-                else if (row.Cells[1].Value is GateShark)
-                {
-                    sm.gscodes.Add((GateShark)row.Cells[1].Value);
-                }
                 else
                 {
                     sm.codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[3].Value.ToString()), row.Cells[1].Value.ToString()));
@@ -586,16 +561,6 @@ namespace NTRDebuggerTool.Forms
 
                         // Read the memory
                         RefreshMemory(RowIndex);
-                    }
-                }
-                foreach (GateShark code in sm.gscodes)
-                {
-                    if (!IsInValues(code.ToString()))
-                    {
-                        int RowIndex = ValuesGrid.Rows.Add();
-                        ValuesGrid[0, RowIndex].Value = null;
-                        ValuesGrid[3, RowIndex].Value = DataTypeExact.Raw;
-                        ValuesGrid[1, RowIndex].Value = code;
                     }
                 }
             }
@@ -821,11 +786,6 @@ namespace NTRDebuggerTool.Forms
             {
                 TextEndAddress.Text = "";
             }
-        }
-
-        private void ImportButton_Click(object sender, EventArgs e)
-        {
-            ThreadEventDispatcher.DispatchImport = true;
         }
     }
 }

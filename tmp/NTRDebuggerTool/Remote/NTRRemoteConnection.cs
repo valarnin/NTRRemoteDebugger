@@ -12,6 +12,7 @@ namespace NTRDebuggerTool.Remote
 {
     public class NTRRemoteConnection
     {
+        private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         #region Members
 
         public string HardwarePID = null;
@@ -70,7 +71,7 @@ namespace NTRDebuggerTool.Remote
             }
             catch (Exception e)
             {
-                Logger.Log(null, e);
+                LOGGER.Error(null, e);
                 this.ReleasesDocument = null;
             }
         }
@@ -100,7 +101,7 @@ namespace NTRDebuggerTool.Remote
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(null, e);
+                    LOGGER.Error(null, e);
                     Disconnected = true;
                 }
                 if (Disconnected)
@@ -131,7 +132,7 @@ namespace NTRDebuggerTool.Remote
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(null, e);
+                    LOGGER.Error(null, e);
                     return false;
                 }
             }
@@ -153,7 +154,7 @@ namespace NTRDebuggerTool.Remote
             }
             catch (Exception e)
             {
-                Logger.Log(null, e);
+                LOGGER.Error(null, e);
             }
             Client = null;
             IsConnected = false;
@@ -320,7 +321,7 @@ namespace NTRDebuggerTool.Remote
                         }
                         catch (Exception e)
                         {
-                            Logger.Log(null, e);
+                            LOGGER.Error(null, e);
                         }
                     }
                 }

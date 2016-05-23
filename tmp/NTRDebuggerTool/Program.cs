@@ -1,5 +1,4 @@
 ﻿using NTRDebuggerTool.Forms;
-using NTRDebuggerTool.Objects;
 using NTRDebuggerTool.Remote;
 using System;
 using System.IO;
@@ -58,8 +57,8 @@ namespace NTRDebuggerTool
                     }
                     catch (Exception e)
                     {
-                        Logger.Log(null, ex);
-                        Logger.Log(null, e);
+                        //log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, ex);
+                        //log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, e);
                     }
                 }
 
@@ -77,7 +76,7 @@ namespace NTRDebuggerTool
             }
             catch (Exception ex)
             {
-                Logger.Log(null, ex);
+                //log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType).Error(null, ex);
                 MessageBox.Show("An exception has occurred. Check the log file at " + System.IO.Path.GetTempPath() + System.IO.Path.DirectorySeparatorChar + "NTRDebuggerTool-Log.txt");
                 Application.Exit();
             }

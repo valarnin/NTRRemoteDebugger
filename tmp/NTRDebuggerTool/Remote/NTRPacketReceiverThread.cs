@@ -1,5 +1,4 @@
 ﻿using NTRDebuggerTool.Forms.FormEnums;
-using NTRDebuggerTool.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +9,8 @@ namespace NTRDebuggerTool.Remote
 {
     class NTRPacketReceiverThread
     {
+        private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private NTRRemoteConnection NTRConnection;
 
         private uint DataRead = 0;
@@ -69,7 +70,7 @@ namespace NTRDebuggerTool.Remote
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(null, e);
+                    LOGGER.Error(null, e);
                     break;
                 }
             }

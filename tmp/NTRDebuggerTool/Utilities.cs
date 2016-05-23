@@ -18,14 +18,5 @@ namespace NTRDebuggerTool
             return BitConverter.ToString(Buffer).Replace("-", "");
         }
 
-        public static uint ReverseEndianness(uint Value)
-        {
-            return BitConverter.ToUInt32(BitConverter.GetBytes(Value).Reverse().ToArray(), 0);
-        }
-
-        public static ushort ReverseEndianness(ushort Value)
-        {
-            return BitConverter.ToUInt16(BitConverter.GetBytes(Value).Reverse().ToArray(), 0);
-        }
     }
 }
