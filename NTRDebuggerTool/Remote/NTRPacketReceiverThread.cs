@@ -237,6 +237,48 @@ namespace NTRDebuggerTool.Remote
             }
         }
 
+        private void SearchThroughSearchBlock()
+        {
+            //Console.WriteLine("SearchThroughSearchBlock");
+            uint    PatternSize = NTRConnection.SearchCriteria[0].Size;
+            uint    BufferSize = NTRConnection.SearchCriteria[0].SearchBlock.Size;
+            byte[]  Buffer = new byte[BufferSize];
+            byte[]  TemporaryBuffer = new byte[PatternSize];
+            int     i;
+            uint     offset;
+            uint     target;
+            int     targetCount = NTRConnection.SearchCriteria[0].SearchBlock.AddressList.Count;
+
+            //this.NTRConnection.SetCurrentOperationText = "Get data through network";
+            ReadBasePacket(Buffer);
+           // this.NTRConnection.SetCurrentOperationText = "Scan data";
+            Thread MemoryScanThread = new Thread(delegate()
+            {
+                for (i = 0; i < targetCount; i++)
+                {
+                    target = NTRConnection.SearchCriteria[0].SearchBlock.AddressList.ElementAt(i);
+                    offset = target - NTRConnection.SearchCriteria[0].SearchBlock.StartAddress;
+                    this.NTRConnection.ProgressScan = offset;
+                    if (NTRConnection.SearchCriteria[0].AddressesFound.ContainsKey(target))
+                    {
+                        Array.Copy(Buffer, offset, TemporaryBuffer, 0, TemporaryBuffer.Length);
+                        if (CheckCriteria(target, TemporaryBuffer))
+                        {
+                            NTRConnection.SearchCriteria[0].AddressesFound.Remove(target);
+                            NTRConnection.SearchCriteria[0].AddressesFound.Add(target, (byte[])TemporaryBuffer.Clone());
+                        }
+                        else
+                        {
+                            NTRConnection.SearchCriteria[0].AddressesFound.Remove(target);
+                        }
+                    }
+                }
+            });
+
+            MemoryScanThread.Start();
+            MemoryScanThread.Join();
+        }
+
         private void ReadMemoryPacket(uint DataLength)
         {
             this.NTRConnection.ProgressReadMax = this.NTRConnection.ProgressScanMax = DataLength;
@@ -245,18 +287,23 @@ namespace NTRDebuggerTool.Remote
                 NTRConnection.SearchCriteria[0].SearchComplete = true;
                 return;
             }
-
-            byte[] Buffer = new byte[DataLength];
-            byte[] TemporaryBuffer = new byte[NTRConnection.SearchCriteria[0].Size];
+            if (NTRConnection.SearchCriteria[0].SearchBlock.Size > 0)
+            {
+                SearchThroughSearchBlock();
+                goto exit;
+            }
+            uint    PatternSize = NTRConnection.SearchCriteria[0].Size;
+            byte[]  Buffer = new byte[DataLength];
+            byte[]  TemporaryBuffer = new byte[PatternSize];
 
             DataRead = 0;
-
+           // Console.WriteLine("ReadMemoryPacket({0:X}), patternSize: {1:X}", DataLength, PatternSize);
             Thread MemoryScanThread = new Thread(delegate()
             {
                 uint RealAddress;
-                for (uint i = 0; i <= DataLength - NTRConnection.SearchCriteria[0].Size; ++i)
+                for (uint i = 0; i <= DataLength - PatternSize; ++i)
                 {
-                    if (DataRead < i + NTRConnection.SearchCriteria[0].Size)
+                    if (DataRead < i + PatternSize)
                     {
                         --i;
                         Thread.Sleep(50);
@@ -285,9 +332,9 @@ namespace NTRDebuggerTool.Remote
             ReadBasePacket(Buffer);
 
             MemoryScanThread.Join();
-
+exit:
             DataRead = 0;
-
+            
             this.NTRConnection.SetCurrentOperationText = "Scanning Read Memory";
 
             NTRConnection.SearchCriteria[0].SearchComplete = true;
