@@ -5,6 +5,7 @@ using NTRDebuggerTool.Remote;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -282,7 +283,7 @@ namespace NTRDebuggerTool.Forms
                 while (ThreadEventDispatcher.RefreshValueReturn.TryDequeue(out MemoryDispatch))
                 {
                     ValuesGrid[1, MemoryDispatch.Row].ToolTipText = MemoryDispatch.ResolvedAddress;
-                    ValuesGrid[2, MemoryDispatch.Row].Value = GetDisplayForByteArray(MemoryDispatch.Value, MemoryDispatch.Type);
+                    ValuesGrid[3, MemoryDispatch.Row].Value = GetDisplayForByteArray(MemoryDispatch.Value, MemoryDispatch.Type);
                 }
             }
 
@@ -382,7 +383,7 @@ namespace NTRDebuggerTool.Forms
         {
             foreach (DataGridViewRow Row in ResultsGrid.SelectedRows)
             {
-                if (!IsInValues((string)Row.Cells[0].Value))
+                if (GetIndexOfAddress((string)Row.Cells[0].Value) == -1)
                 {
                     int RowIndex = ValuesGrid.Rows.Add();
                     ValuesGrid[0, RowIndex].Value = null;
@@ -393,21 +394,18 @@ namespace NTRDebuggerTool.Forms
             }
         }
 
-        private bool IsInValues(String Address)
+        private int GetIndexOfAddress(String Address)
         {
             for (int i = 0; i < ValuesGrid.RowCount; ++i)
             {
-                if ((ValuesGrid[1, i].Value.ToString()) == Address)
-                {
-                    return true;
-                }
+                if ((ValuesGrid[1, i].Value.ToString()) == Address) return i;
             }
-            return false;
+            return -1;
         }
 
         private void ValuesGrid_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex == 2)
+            if (e.RowIndex >= 0 && e.ColumnIndex == 3)
             {
                 SetMemory(e.RowIndex);
             }
@@ -420,10 +418,49 @@ namespace NTRDebuggerTool.Forms
             MemoryDispatch MemoryDispatch = new MemoryDispatch();
             MemoryDispatch.Row = RowIndex;
             MemoryDispatch.TextAddress = TextAddress;
-            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value);
-            MemoryDispatch.Value = GetByteArrayForDataType(MemoryDispatch.Type, (string)ValuesGrid[2, RowIndex].Value);
+            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[4, RowIndex].Value);
+            if (MemoryDispatch.Type == DataTypeExact.INVALID) return;
+            //check value for type range
+            string valString = (string)ValuesGrid[3, RowIndex].Value;
+            bool inputInvalidOrOutOfRange;
+            switch (MemoryDispatch.Type)
+            {
+                case DataTypeExact.Bytes1:
+                    inputInvalidOrOutOfRange = !byte.TryParse(valString, out Byte _notUsed0);
+                    break;
+                case DataTypeExact.Bytes2:
+                    inputInvalidOrOutOfRange = !UInt16.TryParse(valString, out UInt16 _notUsed1);
+                    break;
+                case DataTypeExact.Bytes4:
+                    inputInvalidOrOutOfRange = !UInt32.TryParse(valString, out UInt32 _notUsed2);
+                    break;
+                case DataTypeExact.Bytes8:
+                    inputInvalidOrOutOfRange = UInt64.TryParse(valString, out UInt64 _notUsed3);
+                    break;
+                case DataTypeExact.Float:
+                    inputInvalidOrOutOfRange = !float.TryParse(valString, out float _notUsed4);
+                    break;
+                case DataTypeExact.Double:
+                    inputInvalidOrOutOfRange = !double.TryParse(valString, out double _notUsed5);
+                    break;
+                default:
+                    inputInvalidOrOutOfRange = false;
+                    break;
+            }
+            if (!inputInvalidOrOutOfRange)
+            {
+                MemoryDispatch.Value = GetByteArrayForDataType(MemoryDispatch.Type, valString);
+                ThreadEventDispatcher.WriteAddress.Enqueue(MemoryDispatch);
 
-            ThreadEventDispatcher.WriteAddress.Enqueue(MemoryDispatch);
+                ValuesGrid[4, RowIndex].ErrorText = "";
+                ValuesGrid[4, RowIndex].Style.BackColor = System.Drawing.Color.Transparent;
+            }
+            else
+            {
+                //TODO: mark field as error
+                ValuesGrid[4, RowIndex].ErrorText = "Value is out of range";
+                ValuesGrid[4, RowIndex].Style.BackColor = System.Drawing.Color.Red;
+            }
         }
 
         private byte[] GetByteArrayForDataType(DataTypeExact DataType, string Value)
@@ -456,7 +493,7 @@ namespace NTRDebuggerTool.Forms
             {
                 ValuesGrid.BeginEdit(true);
             }
-            else if (e.ColumnIndex == 3)
+            else if (e.ColumnIndex == 4)
             {
                 ValuesGrid.BeginEdit(true);
                 ((ComboBox)ValuesGrid.EditingControl).DroppedDown = true;
@@ -536,7 +573,9 @@ namespace NTRDebuggerTool.Forms
         private void SaveButton_Click(object sender, EventArgs e)
         {
             SaveManager sm = new SaveManager();
-            sm.Init();
+            //if (uint.TryParse(MemoryStart.Text, out uint mStart)) sm.LastUsedStartAddress = mStart;
+            //if (uint.TryParse(MemorySize.Text, out uint mSize)) sm.LastUsedRangeSize = mSize;
+
             // Get a list of all saved addresses
             foreach (DataGridViewRow row in ValuesGrid.Rows)
             {
@@ -546,57 +585,57 @@ namespace NTRDebuggerTool.Forms
                 }
                 else if (row.Cells[1].Value is GateShark)
                 {
-                    sm.gscodes.Add((GateShark)row.Cells[1].Value);
+                    sm.GateSharkCodes.Add((GateShark)row.Cells[1].Value);
                 }
                 else
                 {
-                    sm.codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[3].Value.ToString()), row.Cells[1].Value.ToString()));
+                    sm.Codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[4].Value.ToString()), row.Cells[1].Value.ToString(), row.Cells[2].Value.ToString()));
                 }
             }
 
             // Set the values
             String[] parts_ = Processes.Text.Split('|');
             if (parts_.Length < 2) return;
-            String game = Config.ConfigFileDirectory + Path.DirectorySeparatorChar + parts_[1] + @".xml";
-            sm.titleId = parts_[1];
-            SaveManager.SaveToXml(game, sm);
-            MessageBox.Show(@"Saved selected addresses to '" + game + "'");
+            sm.TitleId = parts_[1];
+            sm.SaveToJson();
+            MessageBox.Show(@"Saved selected addresses to '" + sm.Filename + "'");
         }
 
         private void LoadButton_Click(object sender, EventArgs e)
         {
             String[] parts_ = Processes.Text.Split('|');
             if (parts_.Length < 2) return;
-            String game = Config.ConfigFileDirectory + Path.DirectorySeparatorChar + parts_[1] + @".xml";
-            SaveManager sm = SaveManager.LoadFromXml(game);
-            if (sm.titleId != parts_[1])
+
+            SaveManager sm = SaveManager.LoadFromJson(parts_[1]);
+            if (sm.TitleId != parts_[1])
             {
                 MessageBox.Show(@"Filename/TitleID Mismatch.");
             }
             else
             {
-                foreach (SaveCode code in sm.codes)
+                foreach (SaveCode code in sm.Codes)
                 {
-                    if (!IsInValues(code.address))
-                    {
-                        int RowIndex = ValuesGrid.Rows.Add();
-                        ValuesGrid[0, RowIndex].Value = null;
-                        ValuesGrid[3, RowIndex].Value = DataTypeExactTool.GetKey(code.type);
-                        ValuesGrid[1, RowIndex].Value = code.address;
+                    int rIdx = GetIndexOfAddress(code.address);
+                    if (rIdx == -1) rIdx = ValuesGrid.Rows.Add();
 
-                        // Read the memory
-                        RefreshMemory(RowIndex);
-                    }
+                    ValuesGrid[0, rIdx].Value = null;
+                    ValuesGrid[4, rIdx].Value = DataTypeExactTool.GetKey(code.type);
+
+                    ValuesGrid[2, rIdx].Value = code.title;
+                    ValuesGrid[1, rIdx].Value = code.address;
+                    RefreshMemory(rIdx);
                 }
-                foreach (GateShark code in sm.gscodes)
+                // Read the memory
+
+            }
+            foreach (GateShark code in sm.GateSharkCodes)
+            {
+                if (GetIndexOfAddress(code.ToString()) == -1)
                 {
-                    if (!IsInValues(code.ToString()))
-                    {
-                        int RowIndex = ValuesGrid.Rows.Add();
-                        ValuesGrid[0, RowIndex].Value = null;
-                        ValuesGrid[3, RowIndex].Value = DataTypeExact.Raw;
-                        ValuesGrid[1, RowIndex].Value = code;
-                    }
+                    int RowIndex = ValuesGrid.Rows.Add();
+                    ValuesGrid[0, RowIndex].Value = null;
+                    ValuesGrid[3, RowIndex].Value = DataTypeExact.Raw;
+                    ValuesGrid[1, RowIndex].Value = code;
                 }
             }
         }
@@ -607,7 +646,7 @@ namespace NTRDebuggerTool.Forms
             MemoryDispatch MemoryDispatch = new MemoryDispatch();
             MemoryDispatch.Row = RowIndex;
             MemoryDispatch.TextAddress = (string)ValuesGrid[1, RowIndex].Value;
-            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[3, RowIndex].Value);
+            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[4, RowIndex].Value);
             ThreadEventDispatcher.RefreshValueAddresses.Enqueue(MemoryDispatch);
         }
 
@@ -738,6 +777,34 @@ namespace NTRDebuggerTool.Forms
                         RefreshMemory(Cell.RowIndex);
                     }
                     break;
+                case "ValuesGridShowMemoryView":
+                    if (ValuesGrid.SelectedCells.Count > 0)
+                    {
+                        MemoryViewer viewer = new MemoryViewer(ThreadEventDispatcher, ValuesGrid.SelectedCells[0].OwningRow.Cells[1].Value.ToString());
+                        viewer.ShowDialog();
+                        viewer.ResultingCodes.ForEach(newCode =>
+                        {
+                            int RowIndex = ValuesGrid.Rows.Add();
+                            ValuesGrid[0, RowIndex].Value = null;
+                            ValuesGrid[4, RowIndex].Value = DataTypeExactTool.GetKey(newCode.type);
+                            ValuesGrid[1, RowIndex].Value = newCode.address;
+                            ValuesGrid[2, RowIndex].Value = newCode.title;
+                            RefreshMemory(RowIndex);
+                        });
+                        /*uint s =  0x09070950+2;
+                        uint en = 0x090709e2;
+                        for(uint i = s; i < en; i = i + 4)
+                        {
+                            SaveCode newCode = new SaveCode(DataTypeExact.Bytes2, i.ToString("x2").PadLeft(8,'0'), "");
+                            int RowIndex = ValuesGrid.Rows.Add();
+                            ValuesGrid[0, RowIndex].Value = null;
+                            ValuesGrid[4, RowIndex].Value = DataTypeExactTool.GetKey(newCode.type);
+                            ValuesGrid[1, RowIndex].Value = newCode.address;
+                            ValuesGrid[2, RowIndex].Value = newCode.title;
+                        }
+                        ;*/
+                    }
+                    break;
             }
         }
 
@@ -827,5 +894,6 @@ namespace NTRDebuggerTool.Forms
         {
             ThreadEventDispatcher.DispatchImport = true;
         }
+
     }
 }

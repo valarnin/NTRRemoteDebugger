@@ -57,6 +57,9 @@
     <StartupObject>NTRDebuggerTool.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Be.Windows.Forms.HexBox, Version=1.6.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Be.Windows.Forms.HexBox.1.6.1\lib\net40\Be.Windows.Forms.HexBox.dll</HintPath>
+    </Reference>
     <Reference Include="Costura, Version=1.6.2.0, Culture=neutral, PublicKeyToken=9919ef960d84173d, processorArchitecture=MSIL">
       <HintPath>..\packages\Costura.Fody.1.6.2\lib\dotnet\Costura.dll</HintPath>
       <Private>False</Private>
@@ -110,6 +113,12 @@
     </Compile>
     <Compile Include="Forms\MainFormThreadButtonState.cs" />
     <Compile Include="Forms\MainFormThreadEventDispatcher.cs" />
+    <Compile Include="Forms\MemoryViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\MemoryViewer.Designer.cs">
+      <DependentUpon>MemoryViewer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\PointerScanDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -138,6 +147,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\MemoryViewer.resx">
+      <DependentUpon>MemoryViewer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\PointerScanDialog.resx">
       <DependentUpon>PointerScanDialog.cs</DependentUpon>

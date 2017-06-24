@@ -7,22 +7,25 @@ namespace NTRDebuggerTool.Objects.Saving
     {
         public DataTypeExact type;
         public String address;
+        public String title;
 
         public SaveCode()
         {
             type = DataTypeExact.Raw;
             address = null;
+            title = null;
         }
 
-        public SaveCode(DataTypeExact type, String address)
+        public SaveCode(DataTypeExact type, String address, String title)
         {
             this.type = type;
             this.address = address;
+            this.title = title;
         }
 
         public override string ToString()
         {
-            return type + ": " + address;
+            return $"[{title}] {type}: {address}";
         }
     }
 }
