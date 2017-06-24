@@ -145,7 +145,7 @@ namespace NTRDebuggerTool.Forms
             ScanAndFillArray();
         }
 
-        
+
         private void btnReloadSelection_Click(object sender, EventArgs e)
         {
 
@@ -174,18 +174,9 @@ namespace NTRDebuggerTool.Forms
             selectedAddress = (uint)(((HexBox)sender).SelectionStart + startingAddress);
 
         }
-
-        public List<SaveCode> ResultingCodes { get; private set; } = new List<SaveCode>();
-        private void btnAddSelected_Click(object sender, EventArgs e)
+        private void RefreshDataGrid()
         {
-            String addrStr = selectedAddress.ToString("x2").PadLeft(8, '0');
-            int existingAddressIdx = ResultingCodes.FindIndex(c => c.address == addrStr);
-            if (existingAddressIdx != -1) ResultingCodes[existingAddressIdx] = new SaveCode(DataTypeExactTool.GetValue(comboSelType.Text), addrStr, txtSelTitle.Text);
-            else ResultingCodes.Add(new SaveCode(DataTypeExactTool.GetValue(comboSelType.Text), addrStr, txtSelTitle.Text));
-
             wantedAddresses.Rows.Clear();
-
-
             ResultingCodes.ForEach((sc) =>
             {
                 int RowIndex = wantedAddresses.Rows.Add();
@@ -194,6 +185,28 @@ namespace NTRDebuggerTool.Forms
                 wantedAddresses[2, RowIndex].Value = DataTypeExactTool.GetKey(sc.type);
             });
             wantedAddresses.Refresh();
+
+        }
+        public List<SaveCode> ResultingCodes { get; private set; } = new List<SaveCode>();
+        private void btnAddSelected_Click(object sender, EventArgs e)
+        {
+            DataTypeExact addrType = DataTypeExactTool.GetValue(comboSelType.Text);
+            if (addrType == DataTypeExact.INVALID) return;
+            String addrStr = selectedAddress.ToString("x2").PadLeft(8, '0');
+            int existingAddressIdx = ResultingCodes.FindIndex(c => c.address == addrStr);
+            if (existingAddressIdx != -1) ResultingCodes[existingAddressIdx] = new SaveCode(addrType, addrStr, txtSelTitle.Text);
+            else ResultingCodes.Add(new SaveCode(DataTypeExactTool.GetValue(comboSelType.Text), addrStr, txtSelTitle.Text));
+            RefreshDataGrid();
+        }
+
+        private void btnRemove_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < wantedAddresses.SelectedRows.Count; i++)
+            {
+                string addr = wantedAddresses[0, i].Value.ToString();
+                ResultingCodes.RemoveAll((sc) => sc.address == addr);
+            }
+            RefreshDataGrid();
         }
     }
 }

@@ -128,6 +128,7 @@
     <Compile Include="Objects\GateShark.cs" />
     <Compile Include="Objects\GateSharkCode.cs" />
     <Compile Include="Objects\Logger.cs" />
+    <Compile Include="Objects\PathHelper.cs" />
     <Compile Include="Objects\Saving\SaveCode.cs" />
     <Compile Include="Objects\Saving\SaveManager.cs" />
     <Compile Include="Objects\SearchCriteria.cs" />

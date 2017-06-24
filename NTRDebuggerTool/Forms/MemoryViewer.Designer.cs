@@ -46,6 +46,7 @@
             this.ValuesGridAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ValuesGridTitleColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ValuesGridTypeColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.btnRemove = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.wantedAddresses)).BeginInit();
@@ -63,13 +64,13 @@
             // 
             // hexEditBox
             // 
-            this.hexEditBox.BytesPerLine = 32;
             this.hexEditBox.ColumnInfoVisible = true;
             this.hexEditBox.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.hexEditBox.GroupSize = 1;
             this.hexEditBox.LineInfoVisible = true;
             this.hexEditBox.Location = new System.Drawing.Point(26, 42);
             this.hexEditBox.Name = "hexEditBox";
+            this.hexEditBox.ReadOnly = true;
             this.hexEditBox.ShadowSelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(60)))), ((int)(((byte)(188)))), ((int)(((byte)(255)))));
             this.hexEditBox.Size = new System.Drawing.Size(774, 414);
             this.hexEditBox.StringViewVisible = true;
@@ -188,7 +189,7 @@
             this.btnAddSelected.Name = "btnAddSelected";
             this.btnAddSelected.Size = new System.Drawing.Size(225, 23);
             this.btnAddSelected.TabIndex = 5;
-            this.btnAddSelected.Text = "Add selected address to list";
+            this.btnAddSelected.Text = "Add/edit selected address to list";
             this.btnAddSelected.UseVisualStyleBackColor = true;
             this.btnAddSelected.Click += new System.EventHandler(this.btnAddSelected_Click);
             // 
@@ -206,15 +207,15 @@
             this.wantedAddresses.Cursor = System.Windows.Forms.Cursors.Default;
             this.wantedAddresses.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.wantedAddresses.Location = new System.Drawing.Point(806, 216);
-            this.wantedAddresses.MultiSelect = false;
             this.wantedAddresses.Name = "wantedAddresses";
+            this.wantedAddresses.ReadOnly = true;
             this.wantedAddresses.RowHeadersVisible = false;
             this.wantedAddresses.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.wantedAddresses.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.wantedAddresses.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.wantedAddresses.ShowCellErrors = false;
             this.wantedAddresses.ShowEditingIcon = false;
             this.wantedAddresses.ShowRowErrors = false;
-            this.wantedAddresses.Size = new System.Drawing.Size(333, 215);
+            this.wantedAddresses.Size = new System.Drawing.Size(333, 195);
             this.wantedAddresses.TabIndex = 14;
             // 
             // ValuesGridAddressColumn
@@ -240,11 +241,22 @@
             this.ValuesGridTypeColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.ValuesGridTypeColumn.Width = 63;
             // 
+            // btnRemove
+            // 
+            this.btnRemove.Location = new System.Drawing.Point(914, 417);
+            this.btnRemove.Name = "btnRemove";
+            this.btnRemove.Size = new System.Drawing.Size(225, 23);
+            this.btnRemove.TabIndex = 15;
+            this.btnRemove.Text = "Remove selected address";
+            this.btnRemove.UseVisualStyleBackColor = true;
+            this.btnRemove.Click += new System.EventHandler(this.btnRemove_Click);
+            // 
             // MemoryViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1151, 468);
+            this.Controls.Add(this.btnRemove);
             this.Controls.Add(this.wantedAddresses);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.statusStrip1);
@@ -284,5 +296,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridTitleColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridTypeColumn;
+        private System.Windows.Forms.Button btnRemove;
     }
 }
