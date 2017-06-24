@@ -41,6 +41,7 @@
             this.ValuesGrid = new System.Windows.Forms.DataGridView();
             this.ValuesGridLockColumn = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ValuesGridAddressColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ValuesGridTitleColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ValuesGridValueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ValuesGridTypeColumn = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.ValuesGridContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -50,6 +51,7 @@
             this.ValuesGridConvertCode = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridPointerSearch = new System.Windows.Forms.ToolStripMenuItem();
             this.ValuesGridCopyResolvedAddress = new System.Windows.Forms.ToolStripMenuItem();
+            this.ValuesGridShowMemoryView = new System.Windows.Forms.ToolStripMenuItem();
             this.LabelIPPort = new System.Windows.Forms.Label();
             this.LabelProcess = new System.Windows.Forms.Label();
             this.LabelMemoryRange = new System.Windows.Forms.Label();
@@ -188,6 +190,7 @@
             this.ValuesGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ValuesGridLockColumn,
             this.ValuesGridAddressColumn,
+            this.ValuesGridTitleColumn,
             this.ValuesGridValueColumn,
             this.ValuesGridTypeColumn});
             this.ValuesGrid.ContextMenuStrip = this.ValuesGridContextMenuStrip;
@@ -223,6 +226,14 @@
             this.ValuesGridAddressColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.ValuesGridAddressColumn.Width = 62;
             // 
+            // ValuesGridTitleColumn
+            // 
+            this.ValuesGridTitleColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ValuesGridTitleColumn.HeaderText = "Name";
+            this.ValuesGridTitleColumn.Name = "ValuesGridTitleColumn";
+            this.ValuesGridTitleColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.ValuesGridTitleColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
             // ValuesGridValueColumn
             // 
             this.ValuesGridValueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
@@ -246,9 +257,10 @@
             this.ValuesGridDeleteItem,
             this.ValuesGridConvertCode,
             this.ValuesGridPointerSearch,
-            this.ValuesGridCopyResolvedAddress});
+            this.ValuesGridCopyResolvedAddress,
+            this.ValuesGridShowMemoryView});
             this.ValuesGridContextMenuStrip.Name = "ValuesGridContextMenuStrip";
-            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(198, 136);
+            this.ValuesGridContextMenuStrip.Size = new System.Drawing.Size(198, 180);
             this.ValuesGridContextMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.ValuesGridContextMenuStrip_ItemClicked);
             // 
             // ValuesGridRefreshItem
@@ -286,6 +298,12 @@
             this.ValuesGridCopyResolvedAddress.Name = "ValuesGridCopyResolvedAddress";
             this.ValuesGridCopyResolvedAddress.Size = new System.Drawing.Size(197, 22);
             this.ValuesGridCopyResolvedAddress.Text = "Copy Resolved Address";
+            // 
+            // ValuesGridShowMemoryView
+            // 
+            this.ValuesGridShowMemoryView.Name = "ValuesGridShowMemoryView";
+            this.ValuesGridShowMemoryView.Size = new System.Drawing.Size(197, 22);
+            this.ValuesGridShowMemoryView.Text = "Show memory area";
             // 
             // LabelIPPort
             // 
@@ -698,10 +716,6 @@
         private System.Windows.Forms.ComboBox ComboSearchType;
         internal System.Windows.Forms.TextBox TextEndAddress;
         private System.Windows.Forms.Label LabelEndAddress;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
-        private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
         internal System.Windows.Forms.TextBox SearchValue2;
         private System.Windows.Forms.Label LabelDash;
         private System.Windows.Forms.Button ButtonConfig;
@@ -712,5 +726,11 @@
         private System.Windows.Forms.Button SaveButton;
         private System.Windows.Forms.Button LoadButton;
         private System.Windows.Forms.Button ImportButton;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn ValuesGridLockColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridAddressColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridTitleColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridValueColumn;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ValuesGridTypeColumn;
+        private System.Windows.Forms.ToolStripMenuItem ValuesGridShowMemoryView;
     }
 }

@@ -21,3 +21,4 @@ Tool to interface with NTR CFW's remote debugging.
 * The first half of the progress bar at the bottom is for receiving memory values from the 3DS. The second half is for searching for the value.
 * The progress bar does not work for narrowing search results, just be patient. It's about 1/3rd of a second per result check for me.
 * NTR's performance seems to degrade over time if the connection gets interrupted at all. I find that after about 10 interrupted connections, I have to reboot my 3DS to get NTR's Debugger to start responding properly again. Apparently running [NTR 3.3 fork](https://github.com/Shadowtrance/BootNTR) from Shadowtrance with the 3.2 ntr.bin (same repo) is better for stability and also works on 10.6.
+* Tested on 11.4 with BootNTR 3.5 loaded via [BootNTR Selector](https://gbatemp.net/threads/release-bootntr-selector.432911/): no stability issues found

@@ -26,6 +26,7 @@ namespace NTRDebuggerTool.Forms.FormEnums
 
         public static DataTypeExact GetValue(string key)
         {
+            if (string.IsNullOrWhiteSpace(key) || !Mapping.ContainsKey(key)) return DataTypeExact.INVALID;
             return Mapping[key];
         }
 
@@ -44,6 +45,8 @@ namespace NTRDebuggerTool.Forms.FormEnums
 
     public enum DataTypeExact
     {
+
+        INVALID = 0,
         Bytes1 = 1,
         Bytes2 = 2,
         Bytes4 = 3,
