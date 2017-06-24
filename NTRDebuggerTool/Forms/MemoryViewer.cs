@@ -146,7 +146,8 @@ namespace NTRDebuggerTool.Forms
             }
 
             hexEditBox.Refresh();
-            hexEditBox.Select(dataOffset, subrangeEnd - subrangeStart);
+            hexEditBox.Select(dataOffset, subrangeEnd - subrangeStart+1);
+            
         }
         private void ScanAndFillArray()
         {
@@ -242,6 +243,11 @@ namespace NTRDebuggerTool.Forms
                 ResultingCodes.RemoveAll((sc) => sc.address == addr);
             }
             RefreshDataGrid();
+        }
+
+        private void btnCopyHex_Click(object sender, EventArgs e)
+        {
+            hexEditBox.CopyHex();
         }
     }
 }

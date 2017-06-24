@@ -47,6 +47,7 @@
             this.ValuesGridTitleColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ValuesGridTypeColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnRemove = new System.Windows.Forms.Button();
+            this.btnCopyHex = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.wantedAddresses)).BeginInit();
@@ -253,11 +254,22 @@
             this.btnRemove.UseVisualStyleBackColor = true;
             this.btnRemove.Click += new System.EventHandler(this.btnRemove_Click);
             // 
+            // btnCopyHex
+            // 
+            this.btnCopyHex.Location = new System.Drawing.Point(561, 13);
+            this.btnCopyHex.Name = "btnCopyHex";
+            this.btnCopyHex.Size = new System.Drawing.Size(239, 22);
+            this.btnCopyHex.TabIndex = 16;
+            this.btnCopyHex.Text = "Copy selected area as hex";
+            this.btnCopyHex.UseVisualStyleBackColor = true;
+            this.btnCopyHex.Click += new System.EventHandler(this.btnCopyHex_Click);
+            // 
             // MemoryViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1151, 468);
+            this.Controls.Add(this.btnCopyHex);
             this.Controls.Add(this.btnRemove);
             this.Controls.Add(this.wantedAddresses);
             this.Controls.Add(this.groupBox1);
@@ -299,5 +311,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridTitleColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn ValuesGridTypeColumn;
         private System.Windows.Forms.Button btnRemove;
+        private System.Windows.Forms.Button btnCopyHex;
     }
 }

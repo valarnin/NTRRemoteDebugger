@@ -412,9 +412,22 @@ namespace NTRDebuggerTool.Forms
 
         private void ValuesGrid_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex == 3)
+            if (e.RowIndex >= 0)
             {
-                SetMemory(e.RowIndex);
+                switch (e.ColumnIndex)
+                {
+                    case 1: //address
+                        try
+                        {
+                            uint addr = uint.Parse(((DataGridView)sender)[e.ColumnIndex, e.RowIndex].Value.ToString(), NumberStyles.HexNumber);
+                            ((DataGridView)sender)[e.ColumnIndex, e.RowIndex].Value = addr.ToString("X2").PadLeft(8, '0');
+                        }
+                        catch { }
+                        break;
+                    case 3: //value
+                        SetMemory(e.RowIndex);
+                        break;
+                }
             }
         }
 
@@ -616,7 +629,7 @@ namespace NTRDebuggerTool.Forms
                 }
                 else
                 {
-                    sm.Codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[4].Value.ToString()), row.Cells[1].Value.ToString(), row.Cells[2].Value.ToString()));
+                    sm.Codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[4].Value.ToString()), row.Cells[1].Value.ToString(), row.Cells[2].Value?.ToString() ?? ""));
                 }
             }
 
