@@ -394,9 +394,9 @@ namespace NTRDebuggerTool.Forms
                 {
                     int RowIndex = ValuesGrid.Rows.Add();
                     ValuesGrid[0, RowIndex].Value = null;
-                    ValuesGrid[3, RowIndex].Value = ComboDataType.Text;
+                    ValuesGrid[4, RowIndex].Value = ComboDataType.Text;
                     ValuesGrid[1, RowIndex].Value = Row.Cells[0].Value;
-                    ValuesGrid[2, RowIndex].Value = SearchValue.Text;
+                    ValuesGrid[3, RowIndex].Value = SearchValue.Text;
                 }
             }
         }
@@ -405,7 +405,7 @@ namespace NTRDebuggerTool.Forms
         {
             for (int i = 0; i < ValuesGrid.RowCount; ++i)
             {
-                if ((ValuesGrid[1, i].Value.ToString()) == Address) return i;
+                if (ValuesGrid[1, i].Value != null && (ValuesGrid[1, i].Value.ToString()) == Address) return i;
             }
             return -1;
         }

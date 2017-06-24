@@ -411,6 +411,7 @@ namespace NTRDebuggerTool.Forms
 
         internal byte[] GetMemoryAtAddress(string ProcessID, uint Address, DataTypeExact DataType)
         {
+            if (ProcessID.Contains("|")) ProcessID = ProcessID.Substring(0, ProcessID.IndexOf('|'));
             return GetMemoryAtAddress(BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(ProcessID), 0), Address, DataType);
         }
 
