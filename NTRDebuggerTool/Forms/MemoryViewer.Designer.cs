@@ -70,7 +70,6 @@
             this.hexEditBox.LineInfoVisible = true;
             this.hexEditBox.Location = new System.Drawing.Point(26, 42);
             this.hexEditBox.Name = "hexEditBox";
-            this.hexEditBox.ReadOnly = true;
             this.hexEditBox.ShadowSelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(60)))), ((int)(((byte)(188)))), ((int)(((byte)(255)))));
             this.hexEditBox.Size = new System.Drawing.Size(774, 414);
             this.hexEditBox.StringViewVisible = true;
@@ -222,6 +221,7 @@
             // 
             this.ValuesGridAddressColumn.HeaderText = "Address";
             this.ValuesGridAddressColumn.Name = "ValuesGridAddressColumn";
+            this.ValuesGridAddressColumn.ReadOnly = true;
             this.ValuesGridAddressColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.ValuesGridAddressColumn.Width = 62;
             // 
@@ -230,6 +230,7 @@
             this.ValuesGridTitleColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.ValuesGridTitleColumn.HeaderText = "Name";
             this.ValuesGridTitleColumn.Name = "ValuesGridTitleColumn";
+            this.ValuesGridTitleColumn.ReadOnly = true;
             this.ValuesGridTitleColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.ValuesGridTitleColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
@@ -237,6 +238,7 @@
             // 
             this.ValuesGridTypeColumn.HeaderText = "Type";
             this.ValuesGridTypeColumn.Name = "ValuesGridTypeColumn";
+            this.ValuesGridTypeColumn.ReadOnly = true;
             this.ValuesGridTypeColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.ValuesGridTypeColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.ValuesGridTypeColumn.Width = 63;

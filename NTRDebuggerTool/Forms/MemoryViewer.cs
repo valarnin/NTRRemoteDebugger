@@ -19,15 +19,18 @@ namespace NTRDebuggerTool.Forms
         public class HexboxProvider : IByteProvider
         {
             public byte[] Data;
-
-            public HexboxProvider(uint buffersize)
+            private long realAddressOffset;
+            public HexboxProvider(uint buffersize, long realAddressOffset = 0)
             {
                 Data = new byte[buffersize];
+                this.realAddressOffset = realAddressOffset;
             }
             public long Length => Data.Length;
 
             public event EventHandler LengthChanged;
             public event EventHandler Changed;
+            public delegate void ByteChangedDelegate(long index, byte oldVal, byte newVal);
+            public event ByteChangedDelegate OnByteChanged;
 
             public void ApplyChanges()
             {
@@ -58,13 +61,16 @@ namespace NTRDebuggerTool.Forms
             public void WriteByte(long index, byte value)
             {
 
+                byte oldval = Data[index];
                 Data[index] = value;
+                OnByteChanged?.Invoke(index, oldval, value);
                 // Changed?.Invoke(this, null);
             }
         }
         MainFormThreadEventDispatcher ted;
         HexboxProvider hexProvider;
-
+        public delegate void LiveMemoryEditDelegate(uint addr, byte newVal);
+        public event LiveMemoryEditDelegate OnLiveMemoryEdit;
 
         uint rangeBothDirections = 512;
         uint centerAdress;
@@ -85,16 +91,24 @@ namespace NTRDebuggerTool.Forms
             InitializeComponent();
             this.ted = ted;
             this.centerAdress = uint.Parse(address, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture);
+
+        }
+
+        private void HexProvider_OnByteChanged(long index, byte oldVal, byte newVal)
+        {
+            uint address = (uint)(index + startingAddress);
+            OnLiveMemoryEdit?.Invoke(address, newVal);
         }
 
         private void MemoryViewer_Load(object sender, EventArgs e)
         {
             hexProvider = new HexboxProvider(rangeBothDirections * 2);
+            hexProvider.OnByteChanged += HexProvider_OnByteChanged;
             hexEditBox.ByteProvider = hexProvider;
             hexEditBox.LineInfoOffset = startingAddress;
             hexEditBox.GroupSeparatorVisible = false;
             comboSelType.Items.AddRange(DataTypeExactTool.GetValues());
-            hexEditBox.BytesPerLine = 16;
+            comboSelType.SelectedIndex = 0;
         }
 
         private void OnReadProgress(uint bytesRead, uint bytesTotal)
@@ -102,9 +116,15 @@ namespace NTRDebuggerTool.Forms
             pBar.Minimum = 0;
             pBar.Maximum = (int)bytesTotal;
             pBar.Value = (int)bytesRead;
+            lblStatus.Text = $"Read {bytesRead} of {bytesTotal}";
+            Application.DoEvents();
         }
         private void ScanAndFillRange(uint dataOffset, uint subrangeStart, uint subrangeEnd)
         {
+            uint a = subrangeStart;
+            uint b = subrangeEnd;
+            subrangeEnd = Math.Max(a, b);
+            subrangeStart = Math.Min(a, b);
             //prepare range in blocks of 8
             uint blocksNeeded = (uint)Math.Ceiling((subrangeEnd - subrangeStart) / 8d);
             byte[,] cache = new byte[blocksNeeded, 8];
@@ -116,6 +136,7 @@ namespace NTRDebuggerTool.Forms
                 for (uint ii = 0; ii < 8; ii++) cache[i, ii] = tmp[ii];
                 this.Invoke(new MethodInvoker(() => OnReadProgress(i, blocksNeeded)));
             }
+            this.Invoke(new MethodInvoker(() => OnReadProgress(blocksNeeded, blocksNeeded)));
 
             //now set the data array accordingly
 
@@ -129,7 +150,6 @@ namespace NTRDebuggerTool.Forms
         }
         private void ScanAndFillArray()
         {
-
             for (uint i = 0; i < rangeBothDirections * 2; i = i + 8)
             {
                 uint cAddr = startingAddress + i;
@@ -137,23 +157,38 @@ namespace NTRDebuggerTool.Forms
                 for (int ii = 0; ii < 8; ii++) hexProvider.Data[i + ii] = tmp[ii];
                 this.Invoke(new MethodInvoker(() => OnReadProgress(i, rangeBothDirections * 2)));
             }
+            this.Invoke(new MethodInvoker(() => OnReadProgress(rangeBothDirections * 2, rangeBothDirections * 2)));
             hexEditBox.Refresh();
             hexEditBox.Select(rangeBothDirections, 1);
         }
+        private void lockInput(bool isLocked)
+        {
+            btnReloadAll.Enabled =
+                btnReloadSelection.Enabled =
+                btnAddSelected.Enabled =
+                btnRemove.Enabled =
+                !isLocked;
+            hexEditBox.ReadOnly = isLocked;
+
+
+        }
         private void btnReloadAll_Click(object sender, EventArgs e)
         {
+            lockInput(true);
             ScanAndFillArray();
+            lockInput(false);
         }
 
 
         private void btnReloadSelection_Click(object sender, EventArgs e)
         {
-
+            lockInput(true);
             long viewOffsetStart = hexEditBox.SelectionStart;
             long viewOffsetLength = hexEditBox.SelectionLength;
             uint rangeStart = startingAddress + (uint)viewOffsetStart;
             uint rangeEnd = rangeStart + (uint)viewOffsetLength - 1;
             ScanAndFillRange((uint)viewOffsetStart, rangeStart, rangeEnd);
+            lockInput(false);
         }
 
         uint _selectedAddress;

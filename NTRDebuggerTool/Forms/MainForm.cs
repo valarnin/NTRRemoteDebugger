@@ -1,4 +1,5 @@
-﻿using NTRDebuggerTool.Forms.FormEnums;
+﻿using Newtonsoft.Json;
+using NTRDebuggerTool.Forms.FormEnums;
 using NTRDebuggerTool.Objects;
 using NTRDebuggerTool.Objects.Saving;
 using NTRDebuggerTool.Remote;
@@ -200,6 +201,7 @@ namespace NTRDebuggerTool.Forms
                 string CurrentRange = MemoryRange.SelectedValue == null ? "All" : MemoryRange.SelectedValue.ToString();
                 MemoryRange.Items.Clear();
                 MemoryRange.Items.Add("All");
+
                 foreach (uint Start in NTRConnection.AddressSpaces.Keys)
                 {
                     MemoryRange.Items.Add(Utilities.GetStringFromByteArray(BitConverter.GetBytes(Start).Reverse().ToArray()) + "|" + Utilities.GetStringFromByteArray(BitConverter.GetBytes(NTRConnection.AddressSpaces[Start]).Reverse().ToArray()));
@@ -210,6 +212,8 @@ namespace NTRDebuggerTool.Forms
                     MemoryRange.SelectedValue = CurrentRange;
                     MemoryRange.SelectedIndex = MemoryRange.Items.IndexOf(CurrentRange);
                 }
+                //save cache file
+                File.WriteAllText(PathHelper.BuildFileConfigPath(Processes.Text.Split('|')[0], "json", "memrangecache"), JsonConvert.SerializeObject(NTRConnection.AddressSpaces));
                 SetProcessSelectedControls(true);
                 SetConnectedControls(true);
                 NTRConnection.SetCurrentOperationText = "";
@@ -282,8 +286,11 @@ namespace NTRDebuggerTool.Forms
                 MemoryDispatch MemoryDispatch;
                 while (ThreadEventDispatcher.RefreshValueReturn.TryDequeue(out MemoryDispatch))
                 {
-                    ValuesGrid[1, MemoryDispatch.Row].ToolTipText = MemoryDispatch.ResolvedAddress;
-                    ValuesGrid[3, MemoryDispatch.Row].Value = GetDisplayForByteArray(MemoryDispatch.Value, MemoryDispatch.Type);
+                    if (MemoryDispatch.Row >= 0)
+                    {
+                        ValuesGrid[1, MemoryDispatch.Row].ToolTipText = MemoryDispatch.ResolvedAddress;
+                        ValuesGrid[3, MemoryDispatch.Row].Value = GetDisplayForByteArray(MemoryDispatch.Value, MemoryDispatch.Type);
+                    }
                 }
             }
 
@@ -411,37 +418,45 @@ namespace NTRDebuggerTool.Forms
             }
         }
 
-        private void SetMemory(int RowIndex)
+        internal void SetMemory(int RowIndex)
         {
             string TextAddress = (string)ValuesGrid[1, RowIndex].Value;
+            string valString = (string)ValuesGrid[3, RowIndex].Value;
+            DataTypeExact type = DataTypeExactTool.GetValue((string)ValuesGrid[4, RowIndex].Value);
+            SetMemory(TextAddress, valString, type, RowIndex);
+        }
+
+
+        internal void SetMemory(string address, string value, DataTypeExact type, int RowIndex = -1)
+        {
+
 
             MemoryDispatch MemoryDispatch = new MemoryDispatch();
             MemoryDispatch.Row = RowIndex;
-            MemoryDispatch.TextAddress = TextAddress;
-            MemoryDispatch.Type = DataTypeExactTool.GetValue((string)ValuesGrid[4, RowIndex].Value);
+            MemoryDispatch.TextAddress = address;
+            MemoryDispatch.Type = type;
             if (MemoryDispatch.Type == DataTypeExact.INVALID) return;
             //check value for type range
-            string valString = (string)ValuesGrid[3, RowIndex].Value;
             bool inputInvalidOrOutOfRange;
             switch (MemoryDispatch.Type)
             {
                 case DataTypeExact.Bytes1:
-                    inputInvalidOrOutOfRange = !byte.TryParse(valString, out Byte _notUsed0);
+                    inputInvalidOrOutOfRange = !byte.TryParse(value, out Byte _notUsed0);
                     break;
                 case DataTypeExact.Bytes2:
-                    inputInvalidOrOutOfRange = !UInt16.TryParse(valString, out UInt16 _notUsed1);
+                    inputInvalidOrOutOfRange = !UInt16.TryParse(value, out UInt16 _notUsed1);
                     break;
                 case DataTypeExact.Bytes4:
-                    inputInvalidOrOutOfRange = !UInt32.TryParse(valString, out UInt32 _notUsed2);
+                    inputInvalidOrOutOfRange = !UInt32.TryParse(value, out UInt32 _notUsed2);
                     break;
                 case DataTypeExact.Bytes8:
-                    inputInvalidOrOutOfRange = UInt64.TryParse(valString, out UInt64 _notUsed3);
+                    inputInvalidOrOutOfRange = UInt64.TryParse(value, out UInt64 _notUsed3);
                     break;
                 case DataTypeExact.Float:
-                    inputInvalidOrOutOfRange = !float.TryParse(valString, out float _notUsed4);
+                    inputInvalidOrOutOfRange = !float.TryParse(value, out float _notUsed4);
                     break;
                 case DataTypeExact.Double:
-                    inputInvalidOrOutOfRange = !double.TryParse(valString, out double _notUsed5);
+                    inputInvalidOrOutOfRange = !double.TryParse(value, out double _notUsed5);
                     break;
                 default:
                     inputInvalidOrOutOfRange = false;
@@ -449,17 +464,22 @@ namespace NTRDebuggerTool.Forms
             }
             if (!inputInvalidOrOutOfRange)
             {
-                MemoryDispatch.Value = GetByteArrayForDataType(MemoryDispatch.Type, valString);
+                MemoryDispatch.Value = GetByteArrayForDataType(MemoryDispatch.Type, value);
                 ThreadEventDispatcher.WriteAddress.Enqueue(MemoryDispatch);
 
-                ValuesGrid[4, RowIndex].ErrorText = "";
-                ValuesGrid[4, RowIndex].Style.BackColor = System.Drawing.Color.Transparent;
+                if (RowIndex >= 0)
+                {
+                    ValuesGrid[4, RowIndex].ErrorText = "";
+                    ValuesGrid[4, RowIndex].Style.BackColor = System.Drawing.Color.Transparent;
+                }
             }
             else
             {
-                //TODO: mark field as error
-                ValuesGrid[4, RowIndex].ErrorText = "Value is out of range";
-                ValuesGrid[4, RowIndex].Style.BackColor = System.Drawing.Color.Red;
+                if (RowIndex >= 0)
+                {
+                    ValuesGrid[4, RowIndex].ErrorText = "Value is out of range";
+                    ValuesGrid[4, RowIndex].Style.BackColor = System.Drawing.Color.Red;
+                }
             }
         }
 
@@ -573,8 +593,15 @@ namespace NTRDebuggerTool.Forms
         private void SaveButton_Click(object sender, EventArgs e)
         {
             SaveManager sm = new SaveManager();
-            //if (uint.TryParse(MemoryStart.Text, out uint mStart)) sm.LastUsedStartAddress = mStart;
-            //if (uint.TryParse(MemorySize.Text, out uint mSize)) sm.LastUsedRangeSize = mSize;
+            try
+            {
+                sm.LastUsedStartAddress = uint.Parse(MemoryStart.Text, NumberStyles.HexNumber);
+                sm.LastUsedRangeSize = uint.Parse(MemorySize.Text, NumberStyles.HexNumber);
+            }
+            catch
+            {
+                sm.LastUsedStartAddress = sm.LastUsedRangeSize = 0;
+            }
 
             // Get a list of all saved addresses
             foreach (DataGridViewRow row in ValuesGrid.Rows)
@@ -613,6 +640,12 @@ namespace NTRDebuggerTool.Forms
             }
             else
             {
+                if (sm.LastUsedStartAddress != 0 && sm.LastUsedRangeSize != 0)
+                {
+                    MemoryRange.SelectedIndex = MemoryRange.Items.Count - 1; //last index should always be Custom
+                    MemoryStart.Text = sm.LastUsedStartAddress.ToString("x2").PadLeft(8, '0');
+                    MemorySize.Text = sm.LastUsedRangeSize.ToString("x2").PadLeft(8, '0');
+                }
                 foreach (SaveCode code in sm.Codes)
                 {
                     int rIdx = GetIndexOfAddress(code.address);
@@ -781,6 +814,8 @@ namespace NTRDebuggerTool.Forms
                     if (ValuesGrid.SelectedCells.Count > 0)
                     {
                         MemoryViewer viewer = new MemoryViewer(ThreadEventDispatcher, ValuesGrid.SelectedCells[0].OwningRow.Cells[1].Value.ToString());
+                        viewer.OnLiveMemoryEdit += (uint addr, byte val) => SetMemory(addr.ToString("x2").PadLeft(8, '0'), val.ToString(), DataTypeExact.Bytes1, -1);
+
                         viewer.ShowDialog();
                         viewer.ResultingCodes.ForEach(newCode =>
                         {
@@ -878,6 +913,52 @@ namespace NTRDebuggerTool.Forms
             {
                 string Start = MemoryStart.Text.PadLeft(8, '0');
                 string Size = MemorySize.Text.PadLeft(8, '0');
+
+                //check if addresses are in uint range [START]
+                uint tmpStart = 0;
+                uint tmpSize = 0;
+                try
+                {
+                    tmpStart = uint.Parse(Start, NumberStyles.HexNumber);
+                    MemoryStart.BackColor = System.Drawing.Color.White;
+                    SearchButton.Enabled = true;
+                }
+                catch
+                {
+                    MemoryStart.BackColor = System.Drawing.Color.Red;
+                    SearchButton.Enabled = false;
+                    return;
+                }
+
+                //check if addresses are in uint range [SIZE]
+                try
+                {
+                    tmpSize = uint.Parse(Size, NumberStyles.HexNumber);
+                    MemorySize.BackColor = System.Drawing.Color.White;
+                    SearchButton.Enabled = true;
+                }
+                catch
+                {
+                    MemorySize.BackColor = System.Drawing.Color.Red;
+                    SearchButton.Enabled = false;
+                    return;
+                }
+
+                //check if addresses are in uint range [END]
+                try
+                {
+                    long tmpTheoreticalEnd = (long)(tmpStart) + tmpSize;
+                    if (tmpTheoreticalEnd > uint.MaxValue) throw new Exception("Dummy exception");
+                    TextEndAddress.BackColor = System.Drawing.Color.White;
+                    SearchButton.Enabled = true;
+                }
+                catch
+                {
+                    TextEndAddress.BackColor = System.Drawing.Color.Red;
+                    SearchButton.Enabled = false;
+                    return;
+                }
+
                 uint StartInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Start).Reverse().ToArray(), 0);
                 uint SizeInt = BitConverter.ToUInt32(Utilities.GetByteArrayFromByteString(Size).Reverse().ToArray(), 0);
                 uint EndInt = StartInt + SizeInt;

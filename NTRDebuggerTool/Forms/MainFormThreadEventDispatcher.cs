@@ -1,8 +1,10 @@
-﻿using NTRDebuggerTool.Forms.FormEnums;
+﻿using Newtonsoft.Json;
+using NTRDebuggerTool.Forms.FormEnums;
 using NTRDebuggerTool.Objects;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -212,19 +214,43 @@ namespace NTRDebuggerTool.Forms
         private void DoOpenProcess()
         {
             Form.SetConnectedControls(false);
-            Form.NTRConnection.SetCurrentOperationText = "Fetching Memory Ranges";
-            //Dummy search criteria to prevent operation collision
-            while (Form.NTRConnection.SearchCriteria.Count > 0)
+            //File.WriteAllText(, JsonConvert.SerializeObject(NTRConnection.AddressSpaces));
+
+            string cacheFile = PathHelper.BuildFileConfigPath(CurrentSelectedProcess.Split('|')[0], "json", "memrangecache");
+            bool hasCacheFile = File.Exists(cacheFile);
+            if(hasCacheFile && MessageBox.Show("Found old memory range cache. It's possible to load this one for skipping scan time.\r\nBe sure the ranges didn't change. If you'r not sure don't load!\r\nLoad cache file?","Memory ranges", MessageBoxButtons.YesNo, MessageBoxIcon.Asterisk) == DialogResult.Yes)
             {
-                Thread.Sleep(10);
+                //user wants cache file
+                try { 
+                Form.NTRConnection.AddressSpaces = JsonConvert.DeserializeObject<Dictionary<uint, uint>>(File.ReadAllText(cacheFile));
+                Form.NTRConnection.IsMemoryListUpdated = true;
+
+                }
+                catch
+                {
+                    MessageBox.Show("Exception while loading memory range cache file. Deleting file and fetching live data.");
+                    File.Delete(cacheFile);
+                    DoOpenProcess();
+                    return;
+                }
             }
-            Form.NTRConnection.SearchCriteria.Add(new SearchCriteria());
-            Form.NTRConnection.SendReadMemoryAddressesPacket(CurrentSelectedProcess.Split('|')[0]);
-            while (!Form.NTRConnection.IsMemoryListUpdated && !Form.ControlEnabledButtonOpenProcess)
+            else
             {
-                Thread.Sleep(10);
+                Form.NTRConnection.SetCurrentOperationText = "Fetching Memory Ranges";
+                //Dummy search criteria to prevent operation collision
+                while (Form.NTRConnection.SearchCriteria.Count > 0)
+                {
+                    Thread.Sleep(10);
+                }
+                Form.NTRConnection.SearchCriteria.Add(new SearchCriteria());
+                Form.NTRConnection.SendReadMemoryAddressesPacket(CurrentSelectedProcess.Split('|')[0]);
+                while (!Form.NTRConnection.IsMemoryListUpdated && !Form.ControlEnabledButtonOpenProcess)
+                {
+                    Thread.Sleep(10);
+                }
+                Form.NTRConnection.SearchCriteria.RemoveAt(0);
+
             }
-            Form.NTRConnection.SearchCriteria.RemoveAt(0);
         }
 
         private void DoSearch()
