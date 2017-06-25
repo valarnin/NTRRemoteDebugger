@@ -11,12 +11,21 @@ namespace NTRDebuggerTool.Objects.Saving
     {
         public uint LastUsedStartAddress = 0;
         public uint LastUsedRangeSize = 0;
-        public String TitleId { get; set; } = null;
-        public List<SaveCode> Codes { get; set; } = new List<SaveCode>();
-        public List<GateShark> GateSharkCodes { get; set; } = new List<GateShark>();
+        public String TitleId { get; set; }
+        public List<SaveCode> Codes { get; set; }
+        public List<GateShark> GateSharkCodes { get; set; }
         [JsonIgnore]
-        public string Filename { get => PathHelper.BuildFileConfigPath(TitleId, "json", "codes"); }
+        public string Filename
+        {
+            get { return PathHelper.BuildFileConfigPath(TitleId, "json", "codes"); }
+        }
 
+        public SaveManager()
+        {
+            GateSharkCodes = new List<GateShark>();
+            Codes = new List<SaveCode>();
+            TitleId = null;
+        }
         public override string ToString()
         {
             return TitleId + ",[" + Codes.ToString() + "],[" + GateSharkCodes.ToString() + "]";

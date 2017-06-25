@@ -25,7 +25,7 @@ namespace NTRDebuggerTool.Objects.Saving
 
         public override string ToString()
         {
-            return $"[{title}] {type}: {address}";
+            return "[" + title + "] " + type + ": " + address;
         }
     }
 }

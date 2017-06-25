@@ -454,22 +454,73 @@ namespace NTRDebuggerTool.Forms
             switch (MemoryDispatch.Type)
             {
                 case DataTypeExact.Bytes1:
-                    inputInvalidOrOutOfRange = !byte.TryParse(value, out Byte _notUsed0);
+                    try
+                    {
+                        byte.Parse(value);
+                        inputInvalidOrOutOfRange = false;
+                    }
+                    catch
+                    {
+                        inputInvalidOrOutOfRange = true;
+                    }
                     break;
                 case DataTypeExact.Bytes2:
-                    inputInvalidOrOutOfRange = !UInt16.TryParse(value, out UInt16 _notUsed1);
+                    try
+                    {
+                        UInt16.Parse(value);
+                        inputInvalidOrOutOfRange = false;
+                    }
+                    catch
+                    {
+                        inputInvalidOrOutOfRange = true;
+                    }
                     break;
                 case DataTypeExact.Bytes4:
-                    inputInvalidOrOutOfRange = !UInt32.TryParse(value, out UInt32 _notUsed2);
+                    try
+                    {
+                        UInt32.Parse(value);
+                        inputInvalidOrOutOfRange = false;
+                    }
+                    catch
+                    {
+                        inputInvalidOrOutOfRange = true;
+                    }
                     break;
                 case DataTypeExact.Bytes8:
-                    inputInvalidOrOutOfRange = UInt64.TryParse(value, out UInt64 _notUsed3);
+                    try
+                    {
+                        UInt64.Parse(value);
+                        inputInvalidOrOutOfRange = false;
+                    }
+                    catch
+                    {
+                        inputInvalidOrOutOfRange = true;
+                    }
+
                     break;
                 case DataTypeExact.Float:
-                    inputInvalidOrOutOfRange = !float.TryParse(value, out float _notUsed4);
+                    try
+                    {
+                        float.Parse(value);
+                        inputInvalidOrOutOfRange = false;
+                    }
+                    catch
+                    {
+                        inputInvalidOrOutOfRange = true;
+                    }
+
                     break;
                 case DataTypeExact.Double:
-                    inputInvalidOrOutOfRange = !double.TryParse(value, out double _notUsed5);
+                    try
+                    {
+                        double.Parse(value);
+                        inputInvalidOrOutOfRange = false;
+                    }
+                    catch
+                    {
+                        inputInvalidOrOutOfRange = true;
+                    }
+
                     break;
                 default:
                     inputInvalidOrOutOfRange = false;
@@ -629,7 +680,7 @@ namespace NTRDebuggerTool.Forms
                 }
                 else
                 {
-                    sm.Codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[4].Value.ToString()), row.Cells[1].Value.ToString(), row.Cells[2].Value?.ToString() ?? ""));
+                    sm.Codes.Add(new SaveCode(DataTypeExactTool.GetValue(row.Cells[4].Value.ToString()), row.Cells[1].Value.ToString(), (row.Cells[2].Value != null ? row.Cells[2].Value.ToString() : "")));
                 }
             }
 

@@ -20,12 +20,21 @@ namespace NTRDebuggerTool.Forms
         {
             public byte[] Data;
             private long realAddressOffset;
+
+            public long Length
+            {
+                get
+                {
+                    return Data.Length;
+                }
+            }
+
             public HexboxProvider(uint buffersize, long realAddressOffset = 0)
             {
                 Data = new byte[buffersize];
                 this.realAddressOffset = realAddressOffset;
             }
-            public long Length => Data.Length;
+
 
             public event EventHandler LengthChanged;
             public event EventHandler Changed;
@@ -53,17 +62,17 @@ namespace NTRDebuggerTool.Forms
                 throw new NotImplementedException();
             }
             #endregion
-            public byte ReadByte(long index) => Data[index];
-            public bool SupportsDeleteBytes() => false;
-            public bool SupportsInsertBytes() => false;
-            public bool SupportsWriteByte() => true;
+            public byte ReadByte(long index) { return Data[index]; }
+            public bool SupportsDeleteBytes() { return false; }
+            public bool SupportsInsertBytes() { return false; }
+            public bool SupportsWriteByte() { return true; }
 
             public void WriteByte(long index, byte value)
             {
 
                 byte oldval = Data[index];
                 Data[index] = value;
-                OnByteChanged?.Invoke(index, oldval, value);
+                if (OnByteChanged != null) OnByteChanged(index, oldval, value);
                 // Changed?.Invoke(this, null);
             }
         }
@@ -83,7 +92,7 @@ namespace NTRDebuggerTool.Forms
                 return tmp;
             }
         }
-        uint endAddress { get => startingAddress + rangeBothDirections * 2; }
+        uint endAddress { get { return startingAddress + rangeBothDirections * 2; } }
 
 
         internal MemoryViewer(MainFormThreadEventDispatcher ted, string address)
@@ -91,13 +100,13 @@ namespace NTRDebuggerTool.Forms
             InitializeComponent();
             this.ted = ted;
             this.centerAdress = uint.Parse(address, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture);
-
+            ResultingCodes = new List<SaveCode>();
         }
 
         private void HexProvider_OnByteChanged(long index, byte oldVal, byte newVal)
         {
             uint address = (uint)(index + startingAddress);
-            OnLiveMemoryEdit?.Invoke(address, newVal);
+            if (OnLiveMemoryEdit != null) OnLiveMemoryEdit(address, newVal);
         }
 
         private void MemoryViewer_Load(object sender, EventArgs e)
@@ -116,7 +125,7 @@ namespace NTRDebuggerTool.Forms
             pBar.Minimum = 0;
             pBar.Maximum = (int)bytesTotal;
             pBar.Value = (int)bytesRead;
-            lblStatus.Text = $"Read {bytesRead} of {bytesTotal}";
+            lblStatus.Text = "Read " + bytesRead + " of " + bytesTotal;
             Application.DoEvents();
         }
         private void ScanAndFillRange(uint dataOffset, uint subrangeStart, uint subrangeEnd)
@@ -146,8 +155,8 @@ namespace NTRDebuggerTool.Forms
             }
 
             hexEditBox.Refresh();
-            hexEditBox.Select(dataOffset, subrangeEnd - subrangeStart+1);
-            
+            hexEditBox.Select(dataOffset, subrangeEnd - subrangeStart + 1);
+
         }
         private void ScanAndFillArray()
         {
@@ -223,7 +232,7 @@ namespace NTRDebuggerTool.Forms
             wantedAddresses.Refresh();
 
         }
-        public List<SaveCode> ResultingCodes { get; private set; } = new List<SaveCode>();
+        public List<SaveCode> ResultingCodes { get; private set; }
         private void btnAddSelected_Click(object sender, EventArgs e)
         {
             DataTypeExact addrType = DataTypeExactTool.GetValue(comboSelType.Text);
