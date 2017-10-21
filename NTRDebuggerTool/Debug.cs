@@ -14,7 +14,7 @@ namespace NTRDebuggerTool
         {
             NTRRemoteConnection Conn = new NTRRemoteConnection();
             Console.WriteLine("Connecting...");
-            Conn.IP = "192.168.1.29";
+            Conn.IP = "10.10.10.10";
             Conn.Port = 8000;
             while (!Conn.Connect()) ;
             Thread t = new Thread(delegate()

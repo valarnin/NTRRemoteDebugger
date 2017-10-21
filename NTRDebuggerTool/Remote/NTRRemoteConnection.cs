@@ -220,21 +220,115 @@ namespace NTRDebuggerTool.Remote
             }
         }
 
+        private int GetAddressSpace(uint addr)
+        {
+            int ret = -1;
+            foreach (uint Current in AddressSpaces.Keys)
+            {
+                if (addr >= Current && addr <= (Current + AddressSpaces[Current]))
+                {
+                    ret = (int)Current;
+                    break;
+                }
+            }
+            return (ret);
+        }
+
+        private bool AddressIsValid(uint address)
+        {
+            if (GetAddressSpace(address) == -1)
+            {
+               Console.WriteLine("Invalid address: {0:X}", address);
+                return (false);
+            }
+            return (true);
+
+        }
+        private bool AddressIsNear(uint address)
+        {
+            if (SearchCriteria[0].SearchBlock.Size == 0
+                || ((address - SearchCriteria[0].SearchBlock.EndAddress) <= 0x1000)
+                    && SearchCriteria[0].SearchBlock.Size < 0x1000000
+                    && SearchCriteria[0].SearchBlock.AddressSpace == GetAddressSpace(address))
+                return (true);
+            return (false);
+        }
+
+        private void AddToSearchBlock(uint address)
+        {
+            uint lastAddress;
+            uint gap;
+
+            if (SearchCriteria[0].SearchBlock.Size == 0)
+            {
+                SearchCriteria[0].SearchBlock.AddressSpace = GetAddressSpace(address);
+                if (SearchCriteria[0].SearchBlock.AddressSpace == -1)
+                {
+                    SearchCriteria[0].SearchBlock.AddressSpace = 0;
+                    return;
+                }
+                SearchCriteria[0].SearchBlock.Size = SearchCriteria[0].Size;
+                SearchCriteria[0].SearchBlock.StartAddress = address;
+                SearchCriteria[0].SearchBlock.EndAddress = address;
+                SearchCriteria[0].SearchBlock.AddressList.Add(address);
+                
+            }
+            else
+            {
+                lastAddress = SearchCriteria[0].SearchBlock.EndAddress;
+                gap = address - lastAddress;
+                SearchCriteria[0].SearchBlock.EndAddress = address;
+                SearchCriteria[0].SearchBlock.Size += gap;
+                SearchCriteria[0].SearchBlock.Size += SearchCriteria[0].Size;
+                SearchCriteria[0].SearchBlock.AddressList.Add(address);
+            }
+        }
+
         private void SendReadMemoryPacketPre()
         {
             SearchCriteria[0].AllSearchesComplete = false;
-            if (SearchCriteria[0].AddressesFound.Count > 0 && (SearchCriteria[0].AddressesFound.Count < 200 || SearchCriteria[0].StartAddress == uint.MaxValue))
+            if (SearchCriteria[0].AddressesFound.Count > 0
+                && (SearchCriteria[0].AddressesFound.Count < 200
+                    || SearchCriteria[0].StartAddress == uint.MaxValue))
             {
                 uint TempAddress = SearchCriteria[0].StartAddress;
                 uint TempLength = SearchCriteria[0].Length;
-                SearchCriteria[0].Length = (uint)SearchCriteria[0].AddressesFound[SearchCriteria[0].AddressesFound.Keys.First()].Length;
+                SearchCriteria[0].SearchBlock.AddressList = new List<uint>();
+                SearchCriteria[0].SearchBlock.StartAddress = 0;
+                SearchCriteria[0].SearchBlock.EndAddress = 0;
+                SearchCriteria[0].SearchBlock.Size = 0;
+                SearchCriteria[0].SearchBlock.AddressSpace = 0;
+                SearchCriteria[0].SearchBlock.AddressList.Clear();
+                //SearchCriteria[0].Length = (uint)SearchCriteria[0].AddressesFound[SearchCriteria[0].AddressesFound.Keys.First()].Length;
                 //Clone the list to an array to prevent concurrent modification
                 foreach (uint Address in new List<uint>(SearchCriteria[0].AddressesFound.Keys))
                 {
-                    SearchCriteria[0].SearchComplete = false;
-                    SearchCriteria[0].StartAddress = Address;
-                    SendReadMemoryPacket();
+                
+                    if (AddressIsValid(Address))
+                    {
+                    retry:
+                        if (AddressIsNear(Address))
+                            AddToSearchBlock(Address);
+                        else
+                        {
+                            SearchCriteria[0].SearchComplete = false;
+                            SearchCriteria[0].StartAddress = SearchCriteria[0].SearchBlock.StartAddress;
+                            SearchCriteria[0].Length = SearchCriteria[0].SearchBlock.Size;
+                            SendReadMemoryPacket();
+                            SearchCriteria[0].SearchBlock.StartAddress = 0;
+                            SearchCriteria[0].SearchBlock.EndAddress = 0;
+                            SearchCriteria[0].SearchBlock.Size = 0;
+                            SearchCriteria[0].SearchBlock.AddressSpace = 0;
+                            SearchCriteria[0].SearchBlock.AddressList.Clear();
+                            goto retry;
+                        }
+                    }
+                                        
                 }
+                SearchCriteria[0].SearchBlock.AddressList.Clear();
+                SearchCriteria[0].SearchBlock.StartAddress = 0;
+                SearchCriteria[0].SearchBlock.EndAddress = 0;
+                SearchCriteria[0].SearchBlock.Size = 0;
                 SearchCriteria[0].Length = TempLength;
                 SearchCriteria[0].StartAddress = TempAddress;
             }
@@ -266,7 +360,7 @@ namespace NTRDebuggerTool.Remote
             {
                 SetCurrentOperationText = "Searching Memory " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(SearchCriteria[0].StartAddress).Reverse().ToArray()) + " - " + Utilities.GetStringFromByteArray(BitConverter.GetBytes(SearchCriteria[0].StartAddress + SearchCriteria[0].Length).Reverse().ToArray());
             }
-
+            //Console.WriteLine("SendPacket(General, Read, {0:X}, {1:X}, {2:X})", SearchCriteria[0].ProcessID, SearchCriteria[0].StartAddress, SearchCriteria[0].Length);
             this.SendPacket(PacketType.General, PacketCommand.Read, new uint[] { BitConverter.ToUInt32(BitConverter.GetBytes(SearchCriteria[0].ProcessID).Reverse().ToArray(), 0), SearchCriteria[0].StartAddress, SearchCriteria[0].Length });
             while (SearchCriteria[0].SearchComplete != true)
             {
